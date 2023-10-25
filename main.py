@@ -8,17 +8,13 @@ import pygame
 
 RESOLUTION = (800, 600)
 
-class TileType(Enum):
-    """ The different types of tiles """
-    VOID = 0
-    GRASS_FULL = 1
-
 class Game:
     def loop(self):
         # Main game loop
         pass
 
 class Pos:
+    """ A 2D position, inside the game (center is 0,0) """
     x: float
     y: float
 
@@ -41,7 +37,12 @@ class Pos:
     def __floordiv__(self, other):
         return Pos(self.x // other.x, self.y // other.y)
 
+    def to_window_coords(self):
+        """ Convert the position to window coordinates """
+        return (self.x + RESOLUTION[0] / 2, self.y + RESOLUTION[1] / 2)
+
 class Entity(pygame.sprite.Sprite):
+    """ An entity is an object that can be rendered on the screen """
     pos: Pos
     size: Pos
     image: pygame.Surface
@@ -99,5 +100,4 @@ class Game:
     def init_window(self):
         self.screen = pygame.display.set_mode(RESOLUTION)
         pygame.display.set_caption("The Game")
-
     
