@@ -166,7 +166,10 @@ class UI:
             )
             # Add gold frame to tile
             pygame.draw.rect(
-                tile_surface, (255, 215, 0), pygame.Rect(0, 0, tile_size, tile_size), 2
+                tile_surface,
+                (255, 215, 0),
+                pygame.Rect(0, 0, tile_size, tile_size),
+                2,
             )
             self.surface.blit(
                 tile_surface,

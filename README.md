@@ -8,6 +8,8 @@ A small tile-based RPG for my NSI class
 
 Install Python and Pygame.
 
+> ⚠️ Python version 3.11 or later is required
+
 Debian/Ubuntu:
 ```bash
 sudo apt install python3 python3-pip

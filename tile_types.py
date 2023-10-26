@@ -142,9 +142,32 @@ class Grass(TileType):
         ):
             return tile("grass_water_8.png")
         elif matches(
-            [True, True, any_value, False, False, False, any_value, True], tiling
+            [any_value, True, any_value, False, False, False, any_value, True], tiling
         ):
             return tile("grass_water_top_and_left.png")
+        elif matches([True, False, True, False, False, False, False, False], tiling):
+            return tile("grass_water_1_3.png")
+        elif matches(
+            [any_value, True, any_value, False, any_value, True, any_value, False],
+            tiling,
+        ):
+            return tile("grass_water_2_6.png")
+        elif matches(
+            [any_value, False, any_value, True, any_value, True, any_value, True],
+            tiling,
+        ):
+            return tile("grass_water_4_6_8.png")
+        elif matches(
+            [any_value, False, any_value, True, any_value, False, any_value, True],
+            tiling,
+        ):
+            return tile("grass_water_4_8.png")
+        elif matches([False, False, False, False, True, False, True, False], tiling):
+            return tile("grass_water_5_7.png")
+        elif matches(
+            [any_value, True, any_value, True, any_value, True, any_value, True], tiling
+        ):
+            return tile("grass_water_island.png")
         else:
             return self.images[0]
 
