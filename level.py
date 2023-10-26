@@ -12,9 +12,9 @@ from tile import Tile, TileType
 from tile_types import Grass, Water
 from ui import UI
 from variables import ZOOM
+
 if TYPE_CHECKING:
     from game import Game
-
 
 
 test_level = [
@@ -122,7 +122,7 @@ test_level = [
 
 
 def clamp(n, smallest, largest):
-    """ Clamps a number between two values """
+    """Clamps a number between two values"""
     return max(smallest, min(n, largest))
 
 
@@ -178,14 +178,14 @@ class Level:
         ]
 
     def get_tile(self, pos: Pos) -> Tile | None:
-        """ Returns the tile at the given position """
+        """Returns the tile at the given position"""
         # Check if out of range
         if pos.x < 0 or pos.x >= self.size.x or pos.y < 0 or pos.y >= self.size.y:
             return None
         return self.tiles[pos.x + pos.y * self.size.x]
 
     def set_tile(self, pos: Pos, tile: Tile):
-        """ Sets the tile at the given position """
+        """Sets the tile at the given position"""
         self.tiles[pos.x + pos.y * self.size.x] = tile
 
         # Reload all tile surfaces

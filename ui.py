@@ -16,7 +16,8 @@ HEART_0 = pygame.image.load("assets/ui/heart_0.png")
 
 
 class UI:
-    """ The UI class, which is responsible for rendering the UI """
+    """The UI class, which is responsible for rendering the UI"""
+
     game: Game
     level: Level
 

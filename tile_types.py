@@ -60,23 +60,24 @@ class TileType:
         )
 
     def on_interact(self, game: Game, pos: Pos):
-        """ Called when the player interacts with the tile """
+        """Called when the player interacts with the tile"""
 
     def on_walk(self, game: Game, pos: Pos):
-        """ Called when the player walks on the tile """
+        """Called when the player walks on the tile"""
 
     def on_attack(self, game: Game, pos: Pos):
-        """ Called when the player attacks the tile """
+        """Called when the player attacks the tile"""
 
     def on_destroy(self, game: Game, pos: Pos):
-        """ Called when the player destroys the tile """
+        """Called when the player destroys the tile"""
 
     def on_use(self, game: Game, pos: Pos):
-        """ Called when the player uses the tile """
+        """Called when the player uses the tile"""
 
 
 class Grass(TileType):
-    """ A grass tile """
+    """A grass tile"""
+
     def __init__(self):
         super().__init__(
             "base:grass",
@@ -106,41 +107,61 @@ class Grass(TileType):
             return self.images[0]
         elif matches([True, False, False, False, False, False, False, False], tiling):
             return tile("grass_water_1.png")
-        elif matches([any_value, True, any_value, False, False, False, False, False], tiling):
+        elif matches(
+            [any_value, True, any_value, False, False, False, False, False], tiling
+        ):
             return tile("grass_water_2.png")
-        elif matches([any_value, True, True, True, any_value, False, False, False], tiling):
+        elif matches(
+            [any_value, True, True, True, any_value, False, False, False], tiling
+        ):
             return tile("grass_water_2_3_4.png")
         elif matches([False, False, True, False, False, False, False, False], tiling):
             return tile("grass_water_3.png")
-        elif matches([False, False, any_value, True, any_value, False, False, False], tiling):
+        elif matches(
+            [False, False, any_value, True, any_value, False, False, False], tiling
+        ):
             return tile("grass_water_4.png")
-        elif matches([False, False, any_value, True, True, True, any_value, False], tiling):
+        elif matches(
+            [False, False, any_value, True, True, True, any_value, False], tiling
+        ):
             return tile("grass_water_4_5_6.png")
         elif matches([False, False, False, False, True, False, False, False], tiling):
             return tile("grass_water_5.png")
         elif matches([False, False, False, False, False, False, True, False], tiling):
             return tile("grass_water_7.png")
-        elif matches([False, False, False, False, any_value, any_value, any_value, False], tiling):
+        elif matches(
+            [False, False, False, False, any_value, any_value, any_value, False], tiling
+        ):
             return tile("grass_water_6.png")
-        elif matches([any_value, False, False, False, any_value, True, True, True], tiling):
+        elif matches(
+            [any_value, False, False, False, any_value, True, True, True], tiling
+        ):
             return tile("grass_water_6_7_8.png")
-        elif matches([any_value, False, False, False, False, False, any_value, True], tiling):
+        elif matches(
+            [any_value, False, False, False, False, False, any_value, True], tiling
+        ):
             return tile("grass_water_8.png")
-        elif matches([True, True, any_value, False, False, False, any_value, True], tiling):
+        elif matches(
+            [True, True, any_value, False, False, False, any_value, True], tiling
+        ):
             return tile("grass_water_top_and_left.png")
         else:
             return self.images[0]
 
+
 def matches(x: list[bool | str], tiling: list[bool]):
-    """ Matches tiling with an array of True, False, any to check if they match """
+    """Matches tiling with an array of True, False, any to check if they match"""
     return all([x[i] == tiling[i] or x[i] == "any" for i in range(len(x))])
 
+
 def tile(x):
-    """ Returns a tile path """
+    """Returns a tile path"""
     return f"assets/tiles/{x}"
 
+
 class Water(TileType):
-    """ A water tile """
+    """A water tile"""
+
     def __init__(self):
         super().__init__(
             "base:water",
