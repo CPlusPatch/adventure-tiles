@@ -60,10 +60,14 @@ class UI:
             RESOLUTION[0] / 2 - box_size[0] / 2,
             RESOLUTION[1] / 2 - box_size[1] / 2,
         )
-        box = pygame.Surface(box_size, pygame.SRCALPHA)
-        # brown
-        box.fill((139, 69, 19))
-        self.surface.blit(box, box_pos)
+
+        # Brown and pixelated rounded corners box
+        pygame.draw.rect(
+            self.surface,
+            (139, 69, 19),
+            pygame.Rect(box_pos, box_size),
+            border_radius=3,
+        )
 
         # Render resume, save, quit and load button
         stack = VButtonStack(
@@ -260,12 +264,21 @@ class UIButtonRenderer:
     def render(self):
         """Returns a surface with the rendered button"""
         surface = pygame.Surface((BUTTON_WIDTH, BUTTON_HEIGHT), pygame.SRCALPHA)
-        surface.fill(self.bgcolor)
+
+        # Draw rectangle with rounded corners and outline
+        pygame.draw.rect(
+            surface,
+            self.bgcolor,
+            pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT),
+            border_radius=3,
+        )
+
         pygame.draw.rect(
             surface,
             self.outlinecolor,
             pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT),
-            2,
+            width=2,
+            border_radius=3,
         )
 
         text_renderer = FontRenderer(self.text)
@@ -319,7 +332,9 @@ class FontRenderer:
                 continue
             char_surface = pygame.image.load(f"assets/font/font_{char}.png")
             surface.blit(char_surface, (x, y))
-            x += char_surface.get_width()
+            x += char_surface.get_width() - 1
+
+        x += 1
 
         # Crop surface to text
         surface = surface.subsurface(pygame.Rect(0, 0, x, 8))
