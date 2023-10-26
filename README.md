@@ -1,4 +1,4 @@
-# NSI Game
+# Adventure Tiles
 
 [![License](https://img.shields.io/github/license/cpluspatch/nsi-game.svg?style=flat-square)](https://github.com/cpluspatch/nsi-game/blob/master/LICENSE)
 

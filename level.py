@@ -11,7 +11,7 @@ from pos import Pos
 from tile import Tile, TileType
 from tile_types import Grass, Water
 from ui import UI
-from variables import ZOOM
+from variables import ZOOM, GameStates
 
 if TYPE_CHECKING:
     from game import Game
@@ -232,7 +232,7 @@ class Level:
 
                 mouse_coords = self.mouse_to_in_game_coordinates()
 
-                if mouse_coords == Pos(x, y):
+                if mouse_coords == Pos(x, y) and self.game.state == GameStates.PLAYING:
                     # Draw a red outline
                     pygame.draw.rect(
                         image,

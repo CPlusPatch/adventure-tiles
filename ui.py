@@ -2,7 +2,15 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 import pygame
-from variables import RESOLUTION, UI_ZOOM
+from variables import (
+    RESOLUTION,
+    UI_ZOOM,
+    GameStates,
+    BUTTON_WIDTH,
+    BUTTON_HEIGHT,
+    BUTTON_GAP,
+)
+from pos import Pos
 
 if TYPE_CHECKING:
     from game import Game
@@ -31,9 +39,72 @@ class UI:
         Renders the UI
         """
         self.surface.fill((0, 0, 0, 0))
-        self.render_health()
-        self.render_map_mode_toolbar()
+
+        if self.game.state == GameStates.PLAYING:
+            self.render_health()
+            self.render_map_mode_toolbar()
+        elif self.game.state == GameStates.MENU:
+            self.render_menu()
         return self.surface
+
+    def render_menu(self):
+        """Renders the menu"""
+        # Render dark overlay on top of game
+        overlay = pygame.Surface(RESOLUTION, pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 200))
+        self.surface.blit(overlay, (0, 0))
+
+        # Render menu box
+        box_size = (300, 180)
+        box_pos = (
+            RESOLUTION[0] / 2 - box_size[0] / 2,
+            RESOLUTION[1] / 2 - box_size[1] / 2,
+        )
+        box = pygame.Surface(box_size, pygame.SRCALPHA)
+        # brown
+        box.fill((139, 69, 19))
+        self.surface.blit(box, box_pos)
+
+        # Render resume, save, quit and load button
+        stack = VButtonStack(
+            [
+                UIButtonRenderer(
+                    "Resume",
+                    self.game.resume,
+                    # gold
+                    bgcolor=(255, 215, 0),
+                    outlinecolor=(0, 0, 0),
+                ),
+                UIButtonRenderer(
+                    "Save",
+                    self.level.save,
+                    bgcolor=(255, 215, 0),
+                    outlinecolor=(0, 0, 0),
+                ),
+                UIButtonRenderer(
+                    "Load",
+                    self.level.load,
+                    bgcolor=(255, 215, 0),
+                    outlinecolor=(0, 0, 0),
+                ),
+                UIButtonRenderer(
+                    "Quit",
+                    self.game.quit,
+                    bgcolor=(255, 215, 0),
+                    outlinecolor=(0, 0, 0),
+                ),
+            ],
+            Pos(box_pos[0] + box_size[0] / 2, box_pos[1] + box_size[1] / 2),
+        )
+
+        stack_surface = stack.render()
+        self.surface.blit(
+            stack_surface,
+            (
+                box_pos[0] + box_size[0] / 2 - stack_surface.get_width() / 2,
+                box_pos[1] + box_size[1] / 2 - stack_surface.get_height() / 2,
+            ),
+        )
 
     def render_health(self):
         """
@@ -83,8 +154,6 @@ class UI:
 
         tile_size = 32 * UI_ZOOM
 
-        print(self.level.selected_tile)
-
         for i, tile in enumerate(self.level.map_editor_hotbar):
             if tile is None:
                 continue
@@ -109,8 +178,6 @@ class UI:
             font_renderer = FontRenderer(str(i + 1))
             font_surface = font_renderer.render()
 
-            print(font_surface.get_height())
-
             self.surface.blit(
                 font_surface,
                 (
@@ -121,6 +188,102 @@ class UI:
                     RESOLUTION[1] - tile_size + 4,
                 ),
             )
+
+
+class VButtonStack:
+    """Vertical stack of buttons"""
+
+    buttons: list[UIButtonRenderer]
+    screen_position: Pos
+
+    def __init__(self, buttons: list[UIButtonRenderer], screen_position: Pos):
+        self.buttons = buttons
+        self.screen_position = screen_position
+
+    def render(self):
+        """Renders the buttons"""
+        surface = pygame.Surface(
+            (BUTTON_WIDTH, (BUTTON_HEIGHT + BUTTON_GAP) * len(self.buttons)),
+            pygame.SRCALPHA,
+        )
+        for i, button in enumerate(self.buttons):
+            button_surface = button.render()
+            surface.blit(
+                button_surface,
+                (
+                    0,
+                    i * (BUTTON_HEIGHT + BUTTON_GAP),
+                ),
+            )
+        return surface
+
+    def tick(self):
+        """Called every frame, at 60 frames a second"""
+        # Check if is being clicked
+        # If so, call the onclick function
+        if pygame.mouse.get_pressed()[0]:
+            mouse_pos = Pos(*pygame.mouse.get_pos())
+            for i, button in enumerate(self.buttons):
+                if (
+                    mouse_pos.x > self.screen_position.x
+                    and mouse_pos.x < self.screen_position.x + BUTTON_WIDTH
+                    and mouse_pos.y
+                    > self.screen_position.y + i * (BUTTON_HEIGHT + BUTTON_GAP)
+                    and mouse_pos.y
+                    < self.screen_position.y
+                    + i * (BUTTON_HEIGHT + BUTTON_GAP)
+                    + BUTTON_HEIGHT
+                ):
+                    button.on_click()
+
+
+class UIButtonRenderer:
+    """Renders a button"""
+
+    text: str
+    onclick: callable
+    bgcolor: pygame.color.Color
+    outlinecolor: pygame.color.Color
+
+    def __init__(
+        self,
+        text: str,
+        onclick: callable,
+        bgcolor: pygame.color.Color = pygame.color.Color("black"),
+        outlinecolor: pygame.color.Color = pygame.color.Color("white"),
+    ):
+        self.text = text
+        self.onclick = onclick
+        self.bgcolor = bgcolor
+        self.outlinecolor = outlinecolor
+
+    def render(self):
+        """Returns a surface with the rendered button"""
+        surface = pygame.Surface((BUTTON_WIDTH, BUTTON_HEIGHT), pygame.SRCALPHA)
+        surface.fill(self.bgcolor)
+        pygame.draw.rect(
+            surface,
+            self.outlinecolor,
+            pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT),
+            2,
+        )
+
+        text_renderer = FontRenderer(self.text)
+        text_surface = text_renderer.render()
+
+        surface.blit(
+            text_surface,
+            (
+                BUTTON_WIDTH / 2 - text_surface.get_width() / 2,
+                BUTTON_HEIGHT / 2 - text_surface.get_height() / 2,
+            ),
+        )
+
+        return surface
+
+    def on_click(self):
+        """Called when the button is clicked"""
+        self.onclick()
 
 
 class FontRenderer:

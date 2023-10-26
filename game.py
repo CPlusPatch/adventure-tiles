@@ -16,12 +16,13 @@ from pygame.constants import (
     K_8,
     K_s,
     K_l,
+    K_ESCAPE,
     QUIT,
 )
 from level import Level
 from pos import Pos
 from main import Entity
-from variables import RESOLUTION
+from variables import RESOLUTION, GameStates
 
 
 class Game:
@@ -33,6 +34,8 @@ class Game:
     entities: pygame.sprite.Group
     player: Entity
     last_click: int
+    last_keypress: int
+    state: GameStates
 
     def __init__(self, screen: pygame.Surface):
         self.level = Level(Pos(10, 10), self)
@@ -41,52 +44,77 @@ class Game:
         self.player = Entity(Pos(0, 0), Pos(16, 16))
         self.entities.add(self.player)
         self.screen = screen
+        self.state = GameStates.PLAYING
 
     def move_camera(self, pos: Pos):
         """Move the camera to the given position"""
         self.camera_position = pos
 
+    def resume(self):
+        """Resume the game"""
+        self.state = GameStates.PLAYING
+
+    def pause(self):
+        """Pause the game"""
+        self.state = GameStates.MENU
+
+    def quit(self):
+        """Quit the game"""
+        pygame.quit()
+        print("Game closed")
+        exit()
+
     def loop(self):
         """The main game loop"""
         self.last_click = pygame.time.get_ticks()
+        self.last_keypress = pygame.time.get_ticks()
         while True:
             # Check for pressed keys
             keys = pygame.key.get_pressed()
 
-            # Move the player
-            # Throttle keypresses to 1 per 10 frames
-            if keys[K_UP]:
-                self.camera_position -= Pos(0, 1)
-            if keys[K_DOWN]:
-                self.camera_position += Pos(0, 1)
-            if keys[K_LEFT]:
-                self.camera_position -= Pos(1, 0)
-            if keys[K_RIGHT]:
-                self.camera_position += Pos(1, 0)
+            if self.last_keypress + 100 < pygame.time.get_ticks():
+                self.last_keypress = pygame.time.get_ticks()
 
-            # If S key is pressed, save game: if L key is pressed, load game
-            if keys[K_s]:
-                self.level.save()
-            if keys[K_l]:
-                self.level.load()
+                if self.state == GameStates.PLAYING:
+                    # Move the player
+                    if keys[K_UP]:
+                        self.camera_position -= Pos(0, 1)
+                    if keys[K_DOWN]:
+                        self.camera_position += Pos(0, 1)
+                    if keys[K_LEFT]:
+                        self.camera_position -= Pos(1, 0)
+                    if keys[K_RIGHT]:
+                        self.camera_position += Pos(1, 0)
 
-            # If keys 1-9 are pressed, select the corresponding tile
-            if keys[K_1]:
-                self.level.selected_tile = 0
-            if keys[K_2]:
-                self.level.selected_tile = 1
-            if keys[K_3]:
-                self.level.selected_tile = 2
-            if keys[K_4]:
-                self.level.selected_tile = 3
-            if keys[K_5]:
-                self.level.selected_tile = 4
-            if keys[K_6]:
-                self.level.selected_tile = 5
-            if keys[K_7]:
-                self.level.selected_tile = 6
-            if keys[K_8]:
-                self.level.selected_tile = 7
+                    # If S key is pressed, save game: if L key is pressed, load game
+                    if keys[K_s]:
+                        self.level.save()
+                    if keys[K_l]:
+                        self.level.load()
+
+                    # If keys 1-9 are pressed, select the corresponding tile
+                    if keys[K_1]:
+                        self.level.selected_tile = 0
+                    if keys[K_2]:
+                        self.level.selected_tile = 1
+                    if keys[K_3]:
+                        self.level.selected_tile = 2
+                    if keys[K_4]:
+                        self.level.selected_tile = 3
+                    if keys[K_5]:
+                        self.level.selected_tile = 4
+                    if keys[K_6]:
+                        self.level.selected_tile = 5
+                    if keys[K_7]:
+                        self.level.selected_tile = 6
+                    if keys[K_8]:
+                        self.level.selected_tile = 7
+
+                if keys[K_ESCAPE]:
+                    if self.state == GameStates.PLAYING:
+                        self.pause()
+                    elif self.state == GameStates.MENU:
+                        self.resume()
 
             self.screen.fill((0, 0, 0))
             self.level.render(self.camera_position)

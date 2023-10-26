@@ -1,7 +1,7 @@
 """ This file contains all the tile types in the game. """
 from __future__ import annotations
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 from pos import Pos
 
 if TYPE_CHECKING:
@@ -149,7 +149,7 @@ class Grass(TileType):
             return self.images[0]
 
 
-def matches(x: list[bool | str], tiling: list[bool]):
+def matches(x: list[bool | Literal["any"]], tiling: list[bool]):
     """Matches tiling with an array of True, False, any to check if they match"""
     return all([x[i] == tiling[i] or x[i] == "any" for i in range(len(x))])
 
