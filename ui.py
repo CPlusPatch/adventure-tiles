@@ -85,3 +85,54 @@ class UI:
             # Add gold frame to tile
             pygame.draw.rect(tile_surface, (255, 215, 0), pygame.Rect(0, 0, tile_size, tile_size), 2)
             self.surface.blit(tile_surface, (RESOLUTION[0] / 2 - len(self.level.map_editor_hotbar) / 2 * tile_size + i * tile_size, RESOLUTION[1] - tile_size))
+
+            # Add a number to the top left of the hotbar tile
+            font_renderer = FontRenderer(str(i + 1))
+            font_surface = font_renderer.render()
+
+            print(font_surface.get_height())
+
+            self.surface.blit(font_surface, (RESOLUTION[0] / 2 - len(self.level.map_editor_hotbar) / 2 * tile_size + i * tile_size + 4, RESOLUTION[1] - tile_size + 4))
+
+
+class FontRenderer:
+    """ Renders font using the font sprites """
+    text: str
+
+    def __init__(self, text: str):
+        self.text = text
+    
+    def render(self):
+        """ Returns a surface with the rendered text """
+        allowed_characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+%#&)(.!,_/) "
+
+        text = self.text.lower()
+
+        surface = pygame.Surface(RESOLUTION, pygame.SRCALPHA)
+
+        # Render each character of text with kerning -1 and UI_ZOOM applied onto the surface
+        # Font is NOT monospace
+        # Spaces are just 4-pixel spaces and not a character
+        # Font height is 8
+        
+        x = 0
+        y = 0
+
+        for char in text:
+            if char not in allowed_characters:
+                continue
+            if char == " ":
+                x += 4 * UI_ZOOM
+                continue
+            char_surface = pygame.image.load(f"assets/font/font_{char}.png")
+            surface.blit(char_surface, (x, y))
+            x += char_surface.get_width()
+        
+        # Crop surface to text
+        surface = surface.subsurface(pygame.Rect(0, 0, x, 8))
+
+        # Scale surface by UI_ZOOM
+        surface = pygame.transform.scale(surface, (int(surface.get_width() * UI_ZOOM), int(surface.get_height() * UI_ZOOM)))
+
+
+        return surface

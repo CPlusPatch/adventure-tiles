@@ -155,7 +155,7 @@ class Level:
             "size": tuple[int, int],
             "camera_position": tuple[int, int]
         ] = {
-            "tiles": [tile.type.name for tile in self.tiles],
+            "tiles": [tile.type.name if tile else "" for tile in self.tiles],
             "size": (self.size.x, self.size.y),
             "camera_position": (self.game.camera_position.x, self.game.camera_position.y)
         }
@@ -182,6 +182,8 @@ class Level:
                     self.tiles.append(Tile(Grass()))
                 elif tile == "base:water":
                     self.tiles.append(Tile(Water()))
+                else:
+                    self.tiles.append(None)
             
             
             self.size = Pos(data["size"][0], data["size"][1])
