@@ -1,0 +1,2 @@
+RESOLUTION = (800, 600)
+ZOOM = 3.0
