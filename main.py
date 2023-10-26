@@ -3,11 +3,19 @@
 # Gaspard WIERZBINSKI, 2023                               #
 # Licensed under MIT                                      #
 ###########################################################
-from pos import Pos
+
+"""
+This file contains the Entity class, which represents an object
+that can be rendered on the screen
+"""
+
 import pygame
+from pos import Pos
+
 
 class Entity(pygame.sprite.Sprite):
-    """ An entity is an object that can be rendered on the screen """
+    """An entity is an object that can be rendered on the screen"""
+
     pos: Pos
     size: Pos
     image: pygame.Surface
@@ -23,7 +31,6 @@ class Entity(pygame.sprite.Sprite):
         self.rect.y = pos.y
 
     def update(self):
-        """ Called every frame, at 60 frames a second """
+        """Called every frame, at 60 frames a second"""
         self.rect.x = self.pos.x
         self.rect.y = self.pos.y
-    

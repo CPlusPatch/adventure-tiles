@@ -1,10 +1,32 @@
+""" The main game file """
+
 import pygame
+from pygame.constants import (
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_1,
+    K_2,
+    K_3,
+    K_4,
+    K_5,
+    K_6,
+    K_7,
+    K_8,
+    K_s,
+    K_l,
+    QUIT,
+)
 from level import Level
 from pos import Pos
 from main import Entity
 from variables import RESOLUTION
 
+
 class Game:
+    """The main game class"""
+
     screen: pygame.Surface
     level: Level
     camera_position: Pos
@@ -19,11 +41,13 @@ class Game:
         self.player = Entity(Pos(0, 0), Pos(16, 16))
         self.entities.add(self.player)
         self.screen = screen
-    
+
     def move_camera(self, pos: Pos):
+        """Move the camera to the given position"""
         self.camera_position = pos
-    
+
     def loop(self):
+        """The main game loop"""
         self.last_click = pygame.time.get_ticks()
         while True:
             # Check for pressed keys
@@ -31,59 +55,60 @@ class Game:
 
             # Move the player
             # Throttle keypresses to 1 per 10 frames
-            if keys[pygame.K_UP]:
+            if keys[K_UP]:
                 self.camera_position -= Pos(0, 1)
-            if keys[pygame.K_DOWN]:
+            if keys[K_DOWN]:
                 self.camera_position += Pos(0, 1)
-            if keys[pygame.K_LEFT]:
+            if keys[K_LEFT]:
                 self.camera_position -= Pos(1, 0)
-            if keys[pygame.K_RIGHT]:
+            if keys[K_RIGHT]:
                 self.camera_position += Pos(1, 0)
-            
+
             # If S key is pressed, save game: if L key is pressed, load game
-            if keys[pygame.K_s]:
+            if keys[K_s]:
                 self.level.save()
-            if keys[pygame.K_l]:
+            if keys[K_l]:
                 self.level.load()
 
             # If keys 1-9 are pressed, select the corresponding tile
-            if keys[pygame.K_1]:
+            if keys[K_1]:
                 self.level.selected_tile = 0
-            if keys[pygame.K_2]:
+            if keys[K_2]:
                 self.level.selected_tile = 1
-            if keys[pygame.K_3]:
+            if keys[K_3]:
                 self.level.selected_tile = 2
-            if keys[pygame.K_4]:
+            if keys[K_4]:
                 self.level.selected_tile = 3
-            if keys[pygame.K_5]:
+            if keys[K_5]:
                 self.level.selected_tile = 4
-            if keys[pygame.K_6]:
+            if keys[K_6]:
                 self.level.selected_tile = 5
-            if keys[pygame.K_7]:
+            if keys[K_7]:
                 self.level.selected_tile = 6
-            if keys[pygame.K_8]:
+            if keys[K_8]:
                 self.level.selected_tile = 7
-            
-            game.screen.fill((0, 0, 0))
-            game.level.render(game.camera_position)
-            game.entities.update()
-            #game.entities.draw(game.screen)
+
+            self.screen.fill((0, 0, 0))
+            self.level.render(self.camera_position)
+            self.entities.update()
+            # game.entities.draw(game.screen)
             pygame.display.flip()
 
             # Cap at 60 FPS
             pygame.time.Clock().tick(60)
 
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == QUIT:
                     pygame.quit()
                     print("Game closed")
                     exit()
 
+
 if __name__ == "__main__":
-    screen = pygame.display.set_mode(RESOLUTION)
+    screen1 = pygame.display.set_mode(RESOLUTION)
     pygame.display.set_caption("The Game")
     pygame.font.init()
     pygame.display.init()
-    game = Game(screen)
+    game = Game(screen1)
     print("Game initialized")
     game.loop()
