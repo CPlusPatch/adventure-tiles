@@ -1,5 +1,15 @@
 {
     "pylint.args": [
         "--extension-pkg-whitelist=pygame"
-    ]
+    ],
+    "editor.formatOnSave": true,
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "gitlens.codeLens.symbolScopes": [
+            "!Module"
+        ],
+        "editor.formatOnType": true,
+        "editor.wordBasedSuggestions": false,
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    }
 }
