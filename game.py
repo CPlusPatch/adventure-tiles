@@ -40,6 +40,12 @@ class Game:
             if keys[pygame.K_RIGHT]:
                 self.camera_position += Pos(1, 0)
             
+            # If S key is pressed, save game: if L key is pressed, load game
+            if keys[pygame.K_s]:
+                self.level.save()
+            if keys[pygame.K_l]:
+                self.level.load()
+            
             game.screen.fill((0, 0, 0))
             game.level.render(game.camera_position)
             game.entities.update()

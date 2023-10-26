@@ -8,6 +8,10 @@ from tile import Tile
 from pos import Pos
 from tile_types import Grass, Water
 from variables import ZOOM
+from ui import UI
+import struct
+import os
+import json
 
 test_level = [
     Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
@@ -29,6 +33,7 @@ class Level:
         self.size = size
         self.tiles: list[Tile | None] = test_level
         self.game = game
+        self.ui = UI(self.game)
 
         # Load surfaces of tiles
         for x in range(self.size.x):
@@ -116,6 +121,7 @@ class Level:
                             self.set_tile(Pos(x, y), Tile(Grass()))
                         
                     if pygame.mouse.get_pressed()[2]:
+
                         # Right click
                         tile.type.on_attack(self.game, Pos(x, y))
                 else:
@@ -126,3 +132,53 @@ class Level:
         # Apply zoom
         final_render = pygame.transform.scale(final_render, (int(final_render.get_width() * ZOOM), int(final_render.get_height() * ZOOM)))
         self.game.screen.blit(final_render, (self.game.screen.get_width() / 2 - camera_position.x * 16 * ZOOM, self.game.screen.get_height() / 2 - camera_position.y * 16 * ZOOM))
+
+        # Render UI
+        self.game.screen.blit(self.ui.renderHealth(), (0, 0))
+    
+    def save(self):
+        data: dict[
+            "tiles": list[str],
+            "size": tuple[int, int],
+            "camera_position": tuple[int, int]
+        ] = {
+            "tiles": [tile.type.name for tile in self.tiles],
+            "size": (self.size.x, self.size.y),
+            "camera_position": (self.game.camera_position.x, self.game.camera_position.y)
+        }
+
+        # If savefile doesnt exist, create it
+        if not os.path.exists('saves'):
+            os.makedirs('saves')
+
+        with open('saves/save1.save', 'w') as save1:  
+            save1.write(json.dumps(data))
+    
+    def load(self):
+        with open('saves/save1.save', 'r') as save1:
+            data: dict[
+                "tiles": list[str],
+                "size": tuple[int, int],
+                "camera_position": tuple[int, int]
+            ] = json.loads(save1.read())
+
+            self.tiles = []
+
+            for tile in data["tiles"]:
+                if tile == "base:grass":
+                    self.tiles.append(Tile(Grass()))
+                elif tile == "base:water":
+                    self.tiles.append(Tile(Water()))
+            
+            
+            self.size = Pos(data["size"][0], data["size"][1])
+            self.game.camera_position = Pos(data["camera_position"][0], data["camera_position"][1])
+
+            # Load surfaces of tiles
+            for x in range(self.size.x):
+                for y in range(self.size.y):
+                    tile = self.get_tile(Pos(x, y))
+                    if tile is None:
+                        continue
+                    tile.load_surfaces([ tile.type if tile else None for tile in self.get_surrounding_tiles(Pos(x, y))])
+
