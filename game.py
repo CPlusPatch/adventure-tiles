@@ -13,7 +13,7 @@ class Game:
     last_click: int
 
     def __init__(self, screen: pygame.Surface):
-        self.level = Level(Pos(8, 8), self)
+        self.level = Level(Pos(10, 10), self)
         self.camera_position = Pos(3, 4)
         self.entities = pygame.sprite.Group()
         self.player = Entity(Pos(0, 0), Pos(16, 16))
@@ -45,6 +45,24 @@ class Game:
                 self.level.save()
             if keys[pygame.K_l]:
                 self.level.load()
+
+            # If keys 1-9 are pressed, select the corresponding tile
+            if keys[pygame.K_1]:
+                self.level.selected_tile = 0
+            if keys[pygame.K_2]:
+                self.level.selected_tile = 1
+            if keys[pygame.K_3]:
+                self.level.selected_tile = 2
+            if keys[pygame.K_4]:
+                self.level.selected_tile = 3
+            if keys[pygame.K_5]:
+                self.level.selected_tile = 4
+            if keys[pygame.K_6]:
+                self.level.selected_tile = 5
+            if keys[pygame.K_7]:
+                self.level.selected_tile = 6
+            if keys[pygame.K_8]:
+                self.level.selected_tile = 7
             
             game.screen.fill((0, 0, 0))
             game.level.render(game.camera_position)

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import pygame
 if TYPE_CHECKING:
     from game import Game
-from tile import Tile
+from tile import Tile, TileType
 from pos import Pos
 from tile_types import Grass, Water
 from variables import ZOOM
@@ -14,26 +14,40 @@ import os
 import json
 
 test_level = [
-    Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
-    Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
-    Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
-    Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
-    Tile(Grass()), Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
-    Tile(Grass()), Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
-    Tile(Grass()), Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
-    Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()),
+    None, None, None, None, None, None, None, None, None, None,
+    None, Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, Tile(Grass()), Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, Tile(Grass()), Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, Tile(Grass()), Tile(Grass()), Tile(Water()), Tile(Water()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), Tile(Grass()), None,
+    None, None, None, None, None, None, None, None, None, None,
 ]
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest))
 
 class Level:
     """ Each level is its own map of 2D tiles """
+    size: Pos
+    tiles: list[Tile | None]
+    game: Game
+    ui: UI
+    edit_mode: bool
+    map_editor_hotbar: list[TileType | None]
+    selected_tile: int # Index of selected tile in tile hotbar
 
     def __init__(self, size: Pos, game: Game):
         self.size = size
         self.tiles: list[Tile | None] = test_level
         self.game = game
-        self.ui = UI(self.game)
+
+        self.edit_mode = True
+        self.map_editor_hotbar = [Grass(), Water(), None, None, None, None]
+        self.selected_tile = 0
+
+        self.ui = UI(self.game, self)
 
         # Load surfaces of tiles
         for x in range(self.size.x):
@@ -111,14 +125,13 @@ class Level:
                             continue
                         self.game.last_click = pygame.time.get_ticks()
 
-                        # Left click
-                        tile.type.on_interact(self.game, Pos(x, y))
-
-                        # Change tile from grass to water and back
-                        if isinstance(tile.type, Grass):
-                            self.set_tile(Pos(x, y), Tile(Water()))
-                        elif isinstance(tile.type, Water):
-                            self.set_tile(Pos(x, y), Tile(Grass()))
+                        if self.edit_mode:
+                            if not isinstance(self.map_editor_hotbar[self.selected_tile], TileType):
+                                continue
+                            self.set_tile(Pos(x, y), Tile(self.map_editor_hotbar[self.selected_tile]))
+                        else:
+                            # Left click
+                            tile.type.on_interact(self.game, Pos(x, y))
                         
                     if pygame.mouse.get_pressed()[2]:
 
@@ -134,7 +147,7 @@ class Level:
         self.game.screen.blit(final_render, (self.game.screen.get_width() / 2 - camera_position.x * 16 * ZOOM, self.game.screen.get_height() / 2 - camera_position.y * 16 * ZOOM))
 
         # Render UI
-        self.game.screen.blit(self.ui.renderHealth(), (0, 0))
+        self.game.screen.blit(self.ui.render(), (0, 0))
     
     def save(self):
         data: dict[

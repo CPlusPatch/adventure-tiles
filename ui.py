@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from game import Game
+    from level import Level
 import pygame
 from variables import RESOLUTION, ZOOM, UI_ZOOM
 
@@ -13,12 +14,23 @@ HEART_0 = pygame.image.load("assets/ui/heart_0.png")
 
 class UI:
     game: Game
+    level: Level
 
-    def __init__(self, game):
+    def __init__(self, game: Game, level: Level):
         self.game = game
+        self.level = level
         self.surface = pygame.Surface(RESOLUTION, pygame.SRCALPHA)
     
-    def renderHealth(self):
+    def render(self):
+        """
+        Renders the UI
+        """
+        self.surface.fill((0, 0, 0, 0))
+        self.render_health()
+        self.render_map_mode_toolbar()
+        return self.surface
+    
+    def render_health(self):
         """
         Draws 5 hearts in the top left of the surface, with margins
         """
@@ -52,4 +64,24 @@ class UI:
         
         return self.surface
 
-        
+    def render_map_mode_toolbar(self):
+        """
+        Draws the map mode toolbar in the bottom center of the screen
+        """
+        if not self.level.edit_mode:
+            return
+
+        # Use self.level.map_editor_hotbar and render each tile inside it in a gold square
+
+        tile_size = 32 * UI_ZOOM
+
+        print(self.level.selected_tile)
+
+        for i in range(len(self.level.map_editor_hotbar)):
+            tile = self.level.map_editor_hotbar[i]
+            if tile is None:
+                continue
+            tile_surface = pygame.transform.scale(pygame.image.load(tile.images[0]), (tile_size, tile_size))
+            # Add gold frame to tile
+            pygame.draw.rect(tile_surface, (255, 215, 0), pygame.Rect(0, 0, tile_size, tile_size), 2)
+            self.surface.blit(tile_surface, (RESOLUTION[0] / 2 - len(self.level.map_editor_hotbar) / 2 * tile_size + i * tile_size, RESOLUTION[1] - tile_size))
