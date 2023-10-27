@@ -1,5 +1,7 @@
 """ The main game file """
 
+import threading
+import time
 import pygame
 from pygame.constants import (
     K_UP,
@@ -64,10 +66,53 @@ class Game:
         print("Game closed")
         exit()
 
+    def move_player(self):
+        """Move the player"""
+        INCREMENT = 0.2
+        while True:
+            if self.state == GameStates.PLAYING:
+                keys = pygame.key.get_pressed()
+                player0 = self.level.players["0"]
+                if keys[K_UP]:
+                    self.camera_position -= Pos(0, INCREMENT)
+                    player0["pos"] -= Pos(0, INCREMENT)
+                    player0["player"].set_direction(180)
+                    player0["player"].is_walking = True
+
+                if keys[K_DOWN]:
+                    self.camera_position += Pos(0, INCREMENT)
+                    player0["pos"] += Pos(0, INCREMENT)
+                    player0["player"].set_direction(0)
+                    player0["player"].is_walking = True
+
+                if keys[K_LEFT]:
+                    self.camera_position -= Pos(INCREMENT, 0)
+                    player0["pos"] -= Pos(INCREMENT, 0)
+                    player0["player"].set_direction(270)
+                    player0["player"].is_walking = True
+
+                if keys[K_RIGHT]:
+                    self.camera_position += Pos(INCREMENT, 0)
+                    player0["pos"] += Pos(INCREMENT, 0)
+                    player0["player"].set_direction(90)
+                    player0["player"].is_walking = True
+
+                if (
+                    not keys[K_UP]
+                    and not keys[K_DOWN]
+                    and not keys[K_LEFT]
+                    and not keys[K_RIGHT]
+                ):
+                    player0["player"].is_walking = False
+                time.sleep(0.05)
+
     def loop(self):
         """The main game loop"""
         self.last_click = pygame.time.get_ticks()
         self.last_keypress = pygame.time.get_ticks()
+
+        player_thread = threading.Thread(target=self.move_player)
+        player_thread.start()
         while True:
             # Check for pressed keys
             keys = pygame.key.get_pressed()
@@ -76,16 +121,6 @@ class Game:
                 self.last_keypress = pygame.time.get_ticks()
 
                 if self.state == GameStates.PLAYING:
-                    # Move the player
-                    if keys[K_UP]:
-                        self.camera_position -= Pos(0, 1)
-                    if keys[K_DOWN]:
-                        self.camera_position += Pos(0, 1)
-                    if keys[K_LEFT]:
-                        self.camera_position -= Pos(1, 0)
-                    if keys[K_RIGHT]:
-                        self.camera_position += Pos(1, 0)
-
                     # If S key is pressed, save game: if L key is pressed, load game
                     if keys[K_s]:
                         self.level.save()
@@ -110,6 +145,19 @@ class Game:
                     if keys[K_8]:
                         self.level.selected_tile = 7
 
+                    # If any of these keys are pressed, reset ghost rotation to 0
+                    if (
+                        keys[K_1]
+                        or keys[K_2]
+                        or keys[K_3]
+                        or keys[K_4]
+                        or keys[K_5]
+                        or keys[K_6]
+                        or keys[K_7]
+                        or keys[K_8]
+                    ):
+                        self.level.current_ghost_rotation = 0
+
                 if keys[K_ESCAPE]:
                     if self.state == GameStates.PLAYING:
                         self.pause()
@@ -118,6 +166,7 @@ class Game:
 
             self.screen.fill((0, 0, 0))
             self.level.render(self.camera_position)
+            self.level.players["0"]["player"].update()
             self.entities.update()
             # game.entities.draw(game.screen)
             pygame.display.flip()

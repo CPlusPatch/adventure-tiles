@@ -260,6 +260,7 @@ class UIButtonRenderer:
     onclick: callable
     bgcolor: pygame.color.Color
     outlinecolor: pygame.color.Color
+    is_hovered: bool
 
     def __init__(
         self,
@@ -272,6 +273,8 @@ class UIButtonRenderer:
         self.onclick = onclick
         self.bgcolor = bgcolor
         self.outlinecolor = outlinecolor
+        # TODO: Add hover effect
+        self.is_hovered = False
 
     def render(self):
         """Returns a surface with the rendered button"""
@@ -293,6 +296,24 @@ class UIButtonRenderer:
             border_radius=3,
         )
 
+        # If button is hovered, render shine effect
+        if self.is_hovered:
+            shiny_surface = pygame.Surface(
+                (BUTTON_WIDTH, BUTTON_HEIGHT), pygame.SRCALPHA
+            )
+
+            pygame.draw.rect(
+                shiny_surface,
+                (255, 255, 255, 110),
+                (0, 0, BUTTON_WIDTH, BUTTON_HEIGHT),
+                border_radius=3,
+            )
+
+            surface.blit(
+                shiny_surface,
+                (0, 0),
+            )
+
         text_renderer = FontRenderer(self.text)
         text_surface = text_renderer.render()
 
@@ -305,6 +326,9 @@ class UIButtonRenderer:
         )
 
         return surface
+
+    def on_hover(self, is_hovered):
+        self.is_hovered = is_hovered
 
     def on_click(self):
         """Called when the button is clicked"""

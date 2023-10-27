@@ -50,12 +50,12 @@ class TileType:
         self.align = align
         self.z_index = z_index
 
-    def get_sprite(self, _surrounding_tiles: list[TileType]):
+    def get_sprites(self, _surrounding_tiles: list[TileType]):
         """
         Allows you to get a sprite based on the surrounding tiles
           surrounding_tiles is a list of 8 tiles, starting from the top left and going clockwise
         """
-        return self.images[0]
+        return self.images
 
     def __repr__(self):
         return (
@@ -76,7 +76,7 @@ class TileType:
         # We first check if there is water
 
         if not any(tiling):
-            return self.images[0]
+            return self.images
         elif matches([True, False, False, False, False, False, False, False], tiling):
             return tile(f"{name_template}_1.png")
         elif matches(
@@ -141,7 +141,7 @@ class TileType:
         # ):
         #    return tile(f"{name_template}_island.png")
         else:
-            return self.images[0]
+            return self.images
 
     def on_interact(self, game: Game, pos: Pos):
         """Called when the player interacts with the tile"""
@@ -175,8 +175,8 @@ class Grass(TileType):
     def on_walk(self, game: Game, pos: Pos):
         print("You walk on grass")
 
-    def get_sprite(self, surrounding_tiles: list[TileType]):
-        super().get_sprite(surrounding_tiles)
+    def get_sprites(self, surrounding_tiles: list[TileType]):
+        super().get_sprites(surrounding_tiles)
 
         if any([isinstance(tile, Water) for tile in surrounding_tiles]):
             return self.assign_dynamic_tile_borders(
@@ -187,7 +187,7 @@ class Grass(TileType):
                 "earth/grass_earth", Earth, surrounding_tiles
             )
         else:
-            return self.images[0]
+            return self.images
 
 
 class Earth(TileType):
@@ -214,7 +214,7 @@ def matches(x: list[bool | Literal["any"]], tiling: list[bool]):
 
 def tile(x):
     """Returns a tile path"""
-    return f"assets/tiles/{x}"
+    return [f"assets/tiles/{x}"]
 
 
 class Water(TileType):
@@ -234,7 +234,7 @@ class Water(TileType):
         print("You walk on water")
 
 
-class Bridge(TileType):
+class BridgeV(TileType):
     """A bridge tile"""
 
     def __init__(self):
@@ -278,9 +278,64 @@ class Bridge(TileType):
         print("You walk on bridge")
 
 
+class BridgeH(TileType):
+    """A bridge tile"""
+
+    def __init__(self):
+        super().__init__(
+            "base:bridge",
+            [
+                "assets/tiles/bridge/r_90/bridge1x1.png",
+                "assets/tiles/bridge/r_90/bridge1x2.png",
+                "assets/tiles/bridge/r_90/bridge1x3.png",
+                "assets/tiles/bridge/r_90/bridge1x4.png",
+                "assets/tiles/bridge/r_90/bridge1x5.png",
+                "assets/tiles/bridge/r_90/bridge2x1.png",
+                "assets/tiles/bridge/r_90/bridge2x2.png",
+                "assets/tiles/bridge/r_90/bridge2x3.png",
+                "assets/tiles/bridge/r_90/bridge2x4.png",
+                "assets/tiles/bridge/r_90/bridge2x5.png",
+                "assets/tiles/bridge/r_90/bridge3x1.png",
+                "assets/tiles/bridge/r_90/bridge3x2.png",
+                "assets/tiles/bridge/r_90/bridge3x3.png",
+                "assets/tiles/bridge/r_90/bridge3x4.png",
+                "assets/tiles/bridge/r_90/bridge3x5.png",
+                "assets/tiles/bridge/r_90/bridge4x1.png",
+                "assets/tiles/bridge/r_90/bridge4x2.png",
+                "assets/tiles/bridge/r_90/bridge4x3.png",
+                "assets/tiles/bridge/r_90/bridge4x4.png",
+                "assets/tiles/bridge/r_90/bridge4x5.png",
+                "assets/tiles/bridge/r_90/bridge5x1.png",
+                "assets/tiles/bridge/r_90/bridge5x2.png",
+                "assets/tiles/bridge/r_90/bridge5x3.png",
+                "assets/tiles/bridge/r_90/bridge5x4.png",
+                "assets/tiles/bridge/r_90/bridge5x5.png",
+                "assets/tiles/bridge/r_90/bridge6x1.png",
+                "assets/tiles/bridge/r_90/bridge6x2.png",
+                "assets/tiles/bridge/r_90/bridge6x3.png",
+                "assets/tiles/bridge/r_90/bridge6x4.png",
+                "assets/tiles/bridge/r_90/bridge6x5.png",
+                "assets/tiles/bridge/r_90/bridge7x1.png",
+                "assets/tiles/bridge/r_90/bridge7x2.png",
+                "assets/tiles/bridge/r_90/bridge7x3.png",
+                "assets/tiles/bridge/r_90/bridge7x4.png",
+                "assets/tiles/bridge/r_90/bridge7x5.png",
+            ],
+            Pos(5, 7),
+            Align.TOP_LEFT,
+            True,
+            True,
+            1,
+        )
+
+    def on_walk(self, game: Game, pos: Pos):
+        print("You walk on bridge")
+
+
 TileRegistry = {
     "base:grass": Grass(),
     "base:earth": Earth(),
     "base:water": Water(),
-    "base:bridge": Bridge(),
+    "base:bridge_v": BridgeV(),
+    "base:bridge_h": BridgeH(),
 }

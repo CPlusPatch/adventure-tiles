@@ -10,9 +10,10 @@ import uuid
 import pygame
 from pos import Pos
 from tile import Tile, TileType
-from tile_types import Grass, Water, Earth, TileRegistry, Bridge
+from tile_types import Grass, Water, Earth, TileRegistry, BridgeV, BridgeH
 from ui import UI
 from variables import ZOOM, GameStates
+from main import Player
 
 if TYPE_CHECKING:
     from game import Game
@@ -129,6 +130,7 @@ def clamp(n, smallest, largest):
 
 PropData = TypedDict("PropData", {"type": Tile, "pos": Pos})
 TileData = TypedDict("TileData", {"type": Tile, "pos": Pos})
+PlayerData = TypedDict("PlayerData", {"pos": Pos, "health": int, "player": Player})
 
 
 class Level:
@@ -142,6 +144,7 @@ class Level:
     map_editor_hotbar: list[TileType | None]
     selected_tile: int  # Index of selected tile in tile hotbar
     props: dict[str, PropData]
+    players: dict[str, PlayerData]
 
     def __init__(self, size: Pos, game: Game):
         self.size = size
@@ -149,24 +152,25 @@ class Level:
         self.game = game
 
         self.edit_mode = True
-        self.map_editor_hotbar = [Grass(), Water(), Earth(), Bridge(), None, None]
+        self.map_editor_hotbar = [Grass(), Water(), Earth(), BridgeV(), BridgeH(), None]
         self.selected_tile = 0
 
         self.ui = UI(self.game, self)
         self.props = {}
 
+        self.players = {}
+
         # Load surfaces of tiles
-        for x in range(self.size.x):
-            for y in range(self.size.y):
-                tile = self.get_tile(Pos(x, y))
-                if tile is None:
-                    continue
-                tile.load_surfaces(
-                    [
-                        tile.type if tile else None
-                        for tile in self.get_surrounding_tiles(Pos(x, y))
-                    ]
-                )
+        self.reload_all_surfaces()
+
+        # Get center position
+        center_pos = Pos((self.size.x / 2), (self.size.y / 2))
+        # Load player 1
+        self.players["0"] = {
+            "pos": center_pos,
+            "health": 100,
+            "player": Player(center_pos),
+        }
 
     def get_surrounding_tiles(self, pos: Pos) -> list[Tile | None]:
         """
@@ -412,6 +416,17 @@ class Level:
             final_render.blit(
                 render,
                 (tile["pos"].x * 16, tile["pos"].y * 16),
+            )
+
+        # Render player
+        for player in self.players.values():
+            player_surface = player["player"].render(camera_position)
+            final_render.blit(
+                player_surface,
+                (
+                    player["pos"].x * 16,
+                    player["pos"].y * 16,
+                ),
             )
 
         # Apply zoom

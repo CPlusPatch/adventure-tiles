@@ -21,7 +21,7 @@ class Tile:
         if self.type.size == Pos(1, 1):
             # try:
             self.surfaces[0] = pygame.image.load(
-                self.type.get_sprite(surrounding_tiles)
+                self.type.get_sprites(surrounding_tiles)[0]
             ).convert_alpha()
             # except Exception as e:
             #    print(e)
@@ -29,8 +29,10 @@ class Tile:
             return
 
         # pylint: disable=consider-using-enumerate
-        for i in range(len(self.surfaces)):
-            self.surfaces[i] = pygame.image.load(self.type.images[i]).convert_alpha()
+        self.surfaces = [
+            pygame.image.load(i).convert_alpha()
+            for i in self.type.get_sprites(surrounding_tiles)
+        ]
 
     def render(self, _pos: Pos):
         """
