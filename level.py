@@ -6,13 +6,13 @@ from __future__ import annotations
 import json
 import os
 from typing import TYPE_CHECKING, TypedDict
+import uuid
 import pygame
 from pos import Pos
 from tile import Tile, TileType
 from tile_types import Grass, Water, Earth, TileRegistry, Bridge
 from ui import UI
 from variables import ZOOM, GameStates
-import uuid
 
 if TYPE_CHECKING:
     from game import Game
