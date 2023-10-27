@@ -10,6 +10,7 @@ from variables import (
     BUTTON_HEIGHT,
     BUTTON_GAP,
 )
+from tile import Tile
 from pos import Pos
 
 if TYPE_CHECKING:
@@ -158,12 +159,20 @@ class UI:
 
         tile_size = 32 * UI_ZOOM
 
-        for i, tile in enumerate(self.level.map_editor_hotbar):
-            if tile is None:
+        for i, tile_type in enumerate(self.level.map_editor_hotbar):
+            if tile_type is None:
                 continue
-            tile_surface = pygame.transform.scale(
-                pygame.image.load(tile.images[0]), (tile_size, tile_size)
+            tile_surface = pygame.Surface((tile_size, tile_size))
+            tile_surface.fill((0, 0, 0, 0))
+
+            tile = Tile(tile_type)
+
+            tile.load_surfaces([])
+            scaled = pygame.transform.scale(
+                tile.render(Pos(0, 0)), (tile_size, tile_size)
             )
+            tile_surface.blit(scaled, (0, 0))
+
             # Add gold frame to tile
             pygame.draw.rect(
                 tile_surface,
