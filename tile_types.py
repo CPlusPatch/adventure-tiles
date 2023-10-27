@@ -139,7 +139,7 @@ class TileType:
         # elif matches(
         #    [any_value, True, any_value, True, any_value, True, any_value, True], tiling
         # ):
-        #    return tile(f"{name_template}.png")
+        #    return tile(f"{name_template}_island.png")
         else:
             return self.images[0]
 
