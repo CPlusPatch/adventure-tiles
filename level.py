@@ -213,6 +213,42 @@ class Level:
         mouse_pos += self.game.camera_position
         return mouse_pos.to_int()
 
+    def add_new_row(self, top: bool):
+        """Adds a new row of None tiles to the top or bottom of the level"""
+        if top:
+            for _ in range(self.size.x):
+                self.tiles.insert(0, None)
+            self.size.y += 1
+        else:
+            for _ in range(self.size.x):
+                self.tiles.append(None)
+            self.size.y += 1
+
+    def add_new_col(self, left: bool):
+        """Adds a new column of None tiles to the left or right of the level"""
+        if left:
+            for y in range(self.size.y):
+                self.tiles.insert(y * (self.size.x + 1), None)
+            self.size.x += 1
+        else:
+            for y in range(self.size.y):
+                self.tiles.insert((y + 1) * (self.size.x + 1), None)
+            self.size.x += 1
+
+    def reload_all_surfaces(self):
+        """Reloads all tile surfaces"""
+        for x in range(self.size.x):
+            for y in range(self.size.y):
+                tile = self.get_tile(Pos(x, y))
+                if tile is None:
+                    continue
+                tile.load_surfaces(
+                    [
+                        tile.type if tile else None
+                        for tile in self.get_surrounding_tiles(Pos(x, y))
+                    ]
+                )
+
     def render(self, camera_position: Pos):
         """
         Render the level onto the screen, with the camera position taken into account
@@ -224,10 +260,10 @@ class Level:
             for y in range(self.size.y):
                 tile = self.get_tile(Pos(x, y))
                 if tile is None:
-                    continue
-
-                # Clone the surface
-                image = tile.render(Pos(x, y)).copy()
+                    image = pygame.Surface((16, 16))
+                else:
+                    # Clone the surface
+                    image = tile.render(Pos(x, y)).copy()
                 # Check if mouse is over tile, counting for camera position
 
                 mouse_coords = self.mouse_to_in_game_coordinates()
@@ -252,8 +288,32 @@ class Level:
                                 self.map_editor_hotbar[self.selected_tile], TileType
                             ):
                                 continue
+
+                            # Check if old tile was None
+                            # If it was, add a new row or column of None tiles
+                            # Tile list is stored as a 1D array, so we need to
+                            # add a new row or column to the left or right
+                            new_x = x
+                            new_y = y
+
+                            if tile is None:
+                                if x == 0:
+                                    self.add_new_col(True)
+                                    self.reload_all_surfaces()
+                                    new_x += 1
+                                elif x == self.size.x - 1:
+                                    self.add_new_col(False)
+                                    self.reload_all_surfaces()
+                                elif y == 0:
+                                    self.add_new_row(True)
+                                    self.reload_all_surfaces()
+                                    new_y += 1
+                                elif y == self.size.y - 1:
+                                    self.add_new_row(False)
+                                    self.reload_all_surfaces()
+
                             self.set_tile(
-                                Pos(x, y),
+                                Pos(new_x, new_y),
                                 Tile(self.map_editor_hotbar[self.selected_tile]),
                             )
                         else:
@@ -263,8 +323,6 @@ class Level:
                     if pygame.mouse.get_pressed()[2]:
                         # Right click
                         tile.type.on_attack(self.game, Pos(x, y))
-                else:
-                    image = tile.render(Pos(x, y))
 
                 final_render.blit(image, (x * 16, y * 16))
 
