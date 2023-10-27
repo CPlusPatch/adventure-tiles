@@ -1,7 +1,7 @@
 """ This file contains all the tile types in the game. """
 from __future__ import annotations
 from enum import Enum
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Type
 from pos import Pos
 
 if TYPE_CHECKING:
@@ -59,6 +59,87 @@ class TileType:
             f"TileType({self.name}, {self.passable}, {self.transparent}, {self.images})"
         )
 
+    def assign_dynamic_tile_borders(
+        self,
+        name_template: str,
+        other_type: Type[TileType],
+        surrounding_tiles: list[TileType],
+    ):
+        """Assigns dynamic tile borders based on the surrounding tiles"""
+        tiling = [isinstance(tile, other_type) for tile in surrounding_tiles]
+
+        any_value = "any"
+
+        # We first check if there is water
+
+        if not any(tiling):
+            return self.images[0]
+        elif matches([True, False, False, False, False, False, False, False], tiling):
+            return tile(f"{name_template}_1.png")
+        elif matches(
+            [any_value, True, any_value, False, False, False, False, False], tiling
+        ):
+            return tile(f"{name_template}_2.png")
+        elif matches(
+            [any_value, True, True, True, any_value, False, False, False], tiling
+        ):
+            return tile(f"{name_template}_2_4.png")
+        elif matches([False, False, True, False, False, False, False, False], tiling):
+            return tile(f"{name_template}_3.png")
+        elif matches(
+            [False, False, any_value, True, any_value, False, False, False], tiling
+        ):
+            return tile(f"{name_template}_4.png")
+        elif matches(
+            [False, False, any_value, True, True, True, any_value, False], tiling
+        ):
+            return tile(f"{name_template}_4_6.png")
+        elif matches([False, False, False, False, True, False, False, False], tiling):
+            return tile(f"{name_template}_5.png")
+        elif matches([False, False, False, False, False, False, True, False], tiling):
+            return tile(f"{name_template}_7.png")
+        elif matches(
+            [False, False, False, False, any_value, any_value, any_value, False], tiling
+        ):
+            return tile(f"{name_template}_6.png")
+        elif matches(
+            [any_value, False, False, False, any_value, True, True, True], tiling
+        ):
+            return tile(f"{name_template}_6_8.png")
+        elif matches(
+            [any_value, False, False, False, False, False, any_value, True], tiling
+        ):
+            return tile(f"{name_template}_8.png")
+        elif matches(
+            [any_value, True, any_value, False, False, False, any_value, True], tiling
+        ):
+            return tile(f"{name_template}_2_8.png")
+        # elif matches([True, False, True, False, False, False, False, False], tiling):
+        #    return tile(f"{name_template}_1_3.png")
+        # elif matches(
+        #   [any_value, True, any_value, False, any_value, True, any_value, False],
+        #    tiling,
+        # ):
+        #    return tile(f"{name_template}_2_6.png")
+        # elif matches(
+        #    [any_value, False, any_value, True, any_value, True, any_value, True],
+        #    tiling,
+        # ):
+        #    return tile(f"{name_template}_4_6_8.png")
+        # elif matches(
+        #    [any_value, False, any_value, True, any_value, False, any_value, True],
+        #    tiling,
+        # ):
+        #    return tile(f"{name_template}_4_8.png")
+        # elif matches([False, False, False, False, True, False, True, False], tiling):
+        #    return tile(f"{name_template}_5_7.png")
+        elif matches(
+            [any_value, True, any_value, True, any_value, True, any_value, True], tiling
+        ):
+            return tile(f"{name_template}.png")
+        else:
+            return self.images[0]
+
     def on_interact(self, game: Game, pos: Pos):
         """Called when the player interacts with the tile"""
 
@@ -94,82 +175,33 @@ class Grass(TileType):
     def get_sprite(self, surrounding_tiles: list[TileType]):
         super().get_sprite(surrounding_tiles)
 
-        # Possible sprites are grass_center
-        # The sprite is chosen based on the surrounding tiles
-
-        tiling = [isinstance(tile, Water) for tile in surrounding_tiles]
-
-        any_value = "any"
-
-        # We first check if there is water
-
-        if not any(tiling):
-            return self.images[0]
-        elif matches([True, False, False, False, False, False, False, False], tiling):
-            return tile("grass_water_1.png")
-        elif matches(
-            [any_value, True, any_value, False, False, False, False, False], tiling
-        ):
-            return tile("grass_water_2.png")
-        elif matches(
-            [any_value, True, True, True, any_value, False, False, False], tiling
-        ):
-            return tile("grass_water_2_3_4.png")
-        elif matches([False, False, True, False, False, False, False, False], tiling):
-            return tile("grass_water_3.png")
-        elif matches(
-            [False, False, any_value, True, any_value, False, False, False], tiling
-        ):
-            return tile("grass_water_4.png")
-        elif matches(
-            [False, False, any_value, True, True, True, any_value, False], tiling
-        ):
-            return tile("grass_water_4_5_6.png")
-        elif matches([False, False, False, False, True, False, False, False], tiling):
-            return tile("grass_water_5.png")
-        elif matches([False, False, False, False, False, False, True, False], tiling):
-            return tile("grass_water_7.png")
-        elif matches(
-            [False, False, False, False, any_value, any_value, any_value, False], tiling
-        ):
-            return tile("grass_water_6.png")
-        elif matches(
-            [any_value, False, False, False, any_value, True, True, True], tiling
-        ):
-            return tile("grass_water_6_7_8.png")
-        elif matches(
-            [any_value, False, False, False, False, False, any_value, True], tiling
-        ):
-            return tile("grass_water_8.png")
-        elif matches(
-            [any_value, True, any_value, False, False, False, any_value, True], tiling
-        ):
-            return tile("grass_water_top_and_left.png")
-        elif matches([True, False, True, False, False, False, False, False], tiling):
-            return tile("grass_water_1_3.png")
-        elif matches(
-            [any_value, True, any_value, False, any_value, True, any_value, False],
-            tiling,
-        ):
-            return tile("grass_water_2_6.png")
-        elif matches(
-            [any_value, False, any_value, True, any_value, True, any_value, True],
-            tiling,
-        ):
-            return tile("grass_water_4_6_8.png")
-        elif matches(
-            [any_value, False, any_value, True, any_value, False, any_value, True],
-            tiling,
-        ):
-            return tile("grass_water_4_8.png")
-        elif matches([False, False, False, False, True, False, True, False], tiling):
-            return tile("grass_water_5_7.png")
-        elif matches(
-            [any_value, True, any_value, True, any_value, True, any_value, True], tiling
-        ):
-            return tile("grass_water_island.png")
+        if any([isinstance(tile, Water) for tile in surrounding_tiles]):
+            return self.assign_dynamic_tile_borders(
+                "grass_water", Water, surrounding_tiles
+            )
+        elif any([isinstance(tile, Earth) for tile in surrounding_tiles]):
+            return self.assign_dynamic_tile_borders(
+                "earth/grass_earth", Earth, surrounding_tiles
+            )
         else:
             return self.images[0]
+
+
+class Earth(TileType):
+    """An earth tile"""
+
+    def __init__(self):
+        super().__init__(
+            "base:earth",
+            ["assets/tiles/earth/earth1.png"],
+            Pos(1, 1),
+            Align.TOP_LEFT,
+            True,
+            False,
+        )
+
+    def on_walk(self, game: Game, pos: Pos):
+        print("You walk on earth")
 
 
 def matches(x: list[bool | Literal["any"]], tiling: list[bool]):
@@ -197,3 +229,10 @@ class Water(TileType):
 
     def on_walk(self, game: Game, pos: Pos):
         print("You walk on water")
+
+
+TileRegistry = {
+    "base:grass": Grass(),
+    "base:earth": Earth(),
+    "base:water": Water(),
+}

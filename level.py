@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import pygame
 from pos import Pos
 from tile import Tile, TileType
-from tile_types import Grass, Water
+from tile_types import Grass, Water, Earth, TileRegistry
 from ui import UI
 from variables import ZOOM, GameStates
 
@@ -143,7 +143,7 @@ class Level:
         self.game = game
 
         self.edit_mode = True
-        self.map_editor_hotbar = [Grass(), Water(), None, None, None, None]
+        self.map_editor_hotbar = [Grass(), Water(), Earth(), None, None, None]
         self.selected_tile = 0
 
         self.ui = UI(self.game, self)
@@ -321,12 +321,7 @@ class Level:
             self.tiles = []
 
             for tile in data["tiles"]:
-                if tile == "base:grass":
-                    self.tiles.append(Tile(Grass()))
-                elif tile == "base:water":
-                    self.tiles.append(Tile(Water()))
-                else:
-                    self.tiles.append(None)
+                self.tiles.append(Tile(TileRegistry[tile]) if tile else None)
 
             self.size = Pos(data["size"][0], data["size"][1])
             self.game.camera_position = Pos(
