@@ -40,8 +40,8 @@ class Game:
     state: GameStates
 
     def __init__(self, screen: pygame.Surface):
-        self.level = Level(Pos(10, 10), self)
         self.camera_position = Pos(3, 4)
+        self.level = Level(Pos(24, 24), self)
         self.entities = pygame.sprite.Group()
         self.player = Entity(Pos(0, 0), Pos(16, 16))
         self.entities.add(self.player)

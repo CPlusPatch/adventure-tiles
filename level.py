@@ -10,7 +10,7 @@ import uuid
 import pygame
 from pos import Pos
 from tile import Tile, TileType
-from tile_types import Grass, Water, Earth, TileRegistry, BridgeV, BridgeH
+from tile_types import Grass, Water, Earth, TileRegistry
 from ui import UI
 from variables import ZOOM, GameStates
 from main import Player
@@ -18,109 +18,12 @@ from main import Player
 if TYPE_CHECKING:
     from game import Game
 
-
-test_level = [
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Water()),
-    Tile(Water()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    Tile(Grass()),
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-]
+SIZE = 24
+test_level = (
+    [None] * SIZE
+    + ([None] + [Tile(Grass())] * (SIZE - 2) + [None]) * (SIZE - 2)
+    + [None] * SIZE
+)
 
 
 def clamp(n, smallest, largest):
@@ -152,7 +55,7 @@ class Level:
         self.game = game
 
         self.edit_mode = True
-        self.map_editor_hotbar = [Grass(), Water(), Earth(), BridgeV(), BridgeH(), None]
+        self.map_editor_hotbar = [Grass(), Water(), Earth(), None, None]
         self.selected_tile = 0
 
         self.ui = UI(self.game, self)
@@ -164,7 +67,7 @@ class Level:
         self.reload_all_surfaces()
 
         # Get center position
-        center_pos = Pos((self.size.x / 2), (self.size.y / 2))
+        center_pos = self.game.camera_position
         # Load player 1
         self.players["0"] = {
             "pos": center_pos,
@@ -200,17 +103,7 @@ class Level:
         self.tiles[pos.x + pos.y * self.size.x] = tile
 
         # Reload all tile surfaces
-        for x in range(self.size.x):
-            for y in range(self.size.y):
-                tile = self.get_tile(Pos(x, y))
-                if tile is None:
-                    continue
-                tile.load_surfaces(
-                    [
-                        tile.type if tile else None
-                        for tile in self.get_surrounding_tiles(Pos(x, y))
-                    ]
-                )
+        self.reload_all_surfaces()
 
     def mouse_to_in_game_coordinates(self):
         """Returns the mouse position in in-game coordinates"""
@@ -252,6 +145,7 @@ class Level:
 
     def reload_all_surfaces(self):
         """Reloads all tile surfaces"""
+        print("Reloaded surfaces")
         for x in range(self.size.x):
             for y in range(self.size.y):
                 tile = self.get_tile(Pos(x, y))
@@ -274,7 +168,29 @@ class Level:
         ghost_props: dict[str, PropData] = {}
         ghost_tiles: dict[str, TileData] = {}
 
-        # Get the highest z-index of all tiles
+        # Render tiles
+        self.render_tiles(final_render, ghost_props, ghost_tiles)
+
+        # Render props
+        self.render_props(final_render)
+
+        # Render ghost props
+        self.render_ghost_props(final_render, ghost_props)
+
+        # Render ghost tiles
+        self.render_ghost_tiles(final_render, ghost_tiles)
+
+        # Render players
+        self.render_players(final_render, camera_position)
+
+        # Apply zoom and blit to screen
+        self.apply_zoom_and_blit(final_render, camera_position)
+
+        # Render UI
+        self.render_ui()
+
+    def render_tiles(self, final_render, ghost_props, ghost_tiles):
+        """Render all tiles onto the screen"""
         for x in range(self.size.x):
             for y in range(self.size.y):
                 tile = self.get_tile(Pos(x, y))
@@ -360,23 +276,20 @@ class Level:
                             if tile is None:
                                 if x == 0:
                                     self.add_new_col(True)
-                                    self.reload_all_surfaces()
                                     new_x += 1
                                 elif x == self.size.x - 1:
                                     self.add_new_col(False)
-                                    self.reload_all_surfaces()
                                 elif y == 0:
                                     self.add_new_row(True)
-                                    self.reload_all_surfaces()
                                     new_y += 1
                                 elif y == self.size.y - 1:
                                     self.add_new_row(False)
-                                    self.reload_all_surfaces()
 
                             self.set_tile(
                                 Pos(new_x, new_y),
                                 Tile(self.map_editor_hotbar[self.selected_tile]),
                             )
+                            self.reload_all_surfaces()
                         else:
                             # Left click
                             tile.type.on_interact(self.game, Pos(x, y))
@@ -387,6 +300,8 @@ class Level:
 
                 final_render.blit(image, (x * 16, y * 16))
 
+    def render_props(self, final_render):
+        """Render all props onto the screen"""
         # Render all props as an overlay
         for prop in self.props.values():
             render = prop["type"].render(prop["pos"])
@@ -395,6 +310,8 @@ class Level:
                 (prop["pos"].x * 16, prop["pos"].y * 16),
             )
 
+    def render_ghost_props(self, final_render, ghost_props):
+        """Render all ghost props onto the screen"""
         for prop in ghost_props.values():
             render = prop["type"].render(prop["pos"])
 
@@ -406,6 +323,8 @@ class Level:
                 (prop["pos"].x * 16, prop["pos"].y * 16),
             )
 
+    def render_ghost_tiles(self, final_render, ghost_tiles):
+        """Render all ghost tiles onto the screen"""
         # Render ghost tiles
         for tile in ghost_tiles.values():
             render = tile["type"].render(tile["pos"])
@@ -418,6 +337,8 @@ class Level:
                 (tile["pos"].x * 16, tile["pos"].y * 16),
             )
 
+    def render_players(self, final_render, camera_position):
+        """Render all players onto the screen"""
         # Render player
         for player in self.players.values():
             player_surface = player["player"].render(camera_position)
@@ -429,6 +350,8 @@ class Level:
                 ),
             )
 
+    def apply_zoom_and_blit(self, final_render, camera_position):
+        """Apply zoom and blit to screen"""
         # Apply zoom
         final_render = pygame.transform.scale(
             final_render,
@@ -445,6 +368,8 @@ class Level:
             ),
         )
 
+    def render_ui(self):
+        """Render UI"""
         # Render UI
         self.game.screen.blit(self.ui.render(), (0, 0))
 
@@ -454,6 +379,7 @@ class Level:
             "tiles" : list[str],
             "size" : tuple[int, int],
             "camera_position" : tuple[int, int],
+            "player":PlayerData,
         ] = {
             "tiles": [tile.type.name if tile else "" for tile in self.tiles],
             "size": (self.size.x, self.size.y),
@@ -461,6 +387,10 @@ class Level:
                 self.game.camera_position.x,
                 self.game.camera_position.y,
             ),
+            "player": {
+                "pos": self.players["0"]["pos"].to_tuple(),
+                "health": self.players["0"]["health"],
+            },
         }
 
         # If savefile doesnt exist, create it
@@ -477,17 +407,24 @@ class Level:
                 "tiles" : list[str],
                 "size" : tuple[int, int],
                 "camera_position" : tuple[int, int],
+                "player":PlayerData,
             ] = json.loads(save1.read())
 
             self.tiles = []
 
             for tile in data["tiles"]:
-                self.tiles.append(Tile(TileRegistry[tile]) if tile else None)
+                self.tiles.append(Tile(TileRegistry[tile]()) if tile else None)
 
             self.size = Pos(data["size"][0], data["size"][1])
             self.game.camera_position = Pos(
                 data["camera_position"][0], data["camera_position"][1]
             )
+
+            self.players["0"]["pos"] = Pos(
+                data["player"]["pos"][0], data["player"]["pos"][1]
+            )
+
+            self.players["0"]["health"] = data["player"]["health"]
 
             # Load surfaces of tiles
             for x in range(self.size.x):

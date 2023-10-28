@@ -42,6 +42,10 @@ class Pos:
         """Convert the position to integers, and then to a tuple"""
         return (int(self.x), int(self.y))
 
+    def to_tuple(self):
+        """Convert the position to a tuple"""
+        return (self.x, self.y)
+
     def to_window_coords(self):
         """Convert the position to window coordinates, counting for zoom"""
         return Pos(
