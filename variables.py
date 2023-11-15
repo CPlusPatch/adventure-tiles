@@ -4,7 +4,7 @@ from enum import Enum
 
 
 RESOLUTION = (800, 600)
-ZOOM = 3.0
+ZOOM = 1
 UI_ZOOM = 2.0
 
 BUTTON_WIDTH = 200

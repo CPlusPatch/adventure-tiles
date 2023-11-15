@@ -68,34 +68,34 @@ class Game:
 
     def move_player(self):
         """Move the player"""
-        INCREMENT = 0.2
+        INCREMENT = 1
         while True:
             if self.state == GameStates.PLAYING:
                 keys = pygame.key.get_pressed()
                 player0 = self.level.players["0"]
+                player_forward_vector = player0["player"].pos.get_forward_vector(
+                    player0["player"].rotation
+                )
+
                 if keys[K_UP]:
-                    self.camera_position -= Pos(0, INCREMENT)
-                    player0["pos"] -= Pos(0, INCREMENT)
-                    player0["player"].set_direction(180)
-                    player0["player"].is_walking = True
+                    self.camera_position -= player_forward_vector * Pos(
+                        INCREMENT, INCREMENT
+                    )
+                    player0["pos"] -= player_forward_vector * Pos(INCREMENT, INCREMENT)
+                    player0["player"].throttle_on = True
 
                 if keys[K_DOWN]:
-                    self.camera_position += Pos(0, INCREMENT)
-                    player0["pos"] += Pos(0, INCREMENT)
-                    player0["player"].set_direction(0)
-                    player0["player"].is_walking = True
+                    self.camera_position += player_forward_vector * Pos(
+                        INCREMENT, INCREMENT
+                    )
+                    player0["pos"] += player_forward_vector * Pos(INCREMENT, INCREMENT)
+                    player0["player"].throttle_on = True
 
                 if keys[K_LEFT]:
-                    self.camera_position -= Pos(INCREMENT, 0)
-                    player0["pos"] -= Pos(INCREMENT, 0)
-                    player0["player"].set_direction(270)
-                    player0["player"].is_walking = True
+                    player0["player"].rotate(10)
 
                 if keys[K_RIGHT]:
-                    self.camera_position += Pos(INCREMENT, 0)
-                    player0["pos"] += Pos(INCREMENT, 0)
-                    player0["player"].set_direction(90)
-                    player0["player"].is_walking = True
+                    player0["player"].rotate(-10)
 
                 if (
                     not keys[K_UP]
@@ -103,7 +103,7 @@ class Game:
                     and not keys[K_LEFT]
                     and not keys[K_RIGHT]
                 ):
-                    player0["player"].is_walking = False
+                    player0["player"].throttle_on = False
                 time.sleep(0.05)
 
     def loop(self):

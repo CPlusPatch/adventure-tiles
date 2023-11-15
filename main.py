@@ -48,60 +48,41 @@ class Entity(pygame.sprite.Sprite):
 class Player(Entity):
     """The player entity"""
 
-    is_walking: bool
+    throttle_on: bool
     frame: int
     timer: int
     sprites: list[pygame.Surface]
+    rotation: float
 
     def __init__(self, pos: Pos):
-        super().__init__(pos, Pos(1, 2))
+        super().__init__(pos, Pos(43, 47))
 
         # Load animation sprites from a single image of 16x32 sprites stitched together
         spritesheet = pygame.image.load(
-            "assets/character/char1_walking.png"
+            "assets/spaceship/greenships.png"
         ).convert_alpha()
-        self.sprites = []
-        for i in range(4):
-            self.sprites.append(spritesheet.subsurface(pygame.Rect(i * 16, 0, 16, 32)))
+        self.sprites = [spritesheet.subsurface(pygame.Rect(0, 0, 43, 47))]
 
         self.image = self.sprites[0]
         self.frame = 0
         self.timer = 0
-        self.is_walking = False
+        self.throttle_on = False
+        self.rotation = 180
 
-    def set_direction(self, angle: int):
-        """Set the direction of the player"""
-        if angle == 0:
-            spritesheet = pygame.image.load(
-                "assets/character/char1_walking.png"
-            ).convert_alpha()
-        elif angle == 90:
-            spritesheet = pygame.image.load(
-                "assets/character/char1_walking_90.png"
-            ).convert_alpha()
-        elif angle == 180:
-            spritesheet = pygame.image.load(
-                "assets/character/char1_walking_180.png"
-            ).convert_alpha()
-        elif angle == 270:
-            spritesheet = pygame.image.load(
-                "assets/character/char1_walking_270.png"
-            ).convert_alpha()
-
-        self.sprites = []
-        for i in range(4):
-            self.sprites.append(spritesheet.subsurface(pygame.Rect(i * 16, 0, 16, 32)))
+    def rotate(self, angle: float):
+        """Rotate the player by the given angle"""
+        self.rotation += angle
 
     def update(self):
         """Called every frame, at 60 frames a second"""
-        if not self.is_walking:
+        if not self.throttle_on:
             return
 
         self.timer += 1
         if self.timer == 10:
             self.frame += 1
             self.timer = 0
-        if self.frame == 4:
+        if self.frame == 1:
             self.frame = 0
         self.image = self.sprites[self.frame]
 
@@ -109,8 +90,5 @@ class Player(Entity):
 
     def render(self, _camera_pos: Pos):
         """Render the entity on the screen"""
-        surface = pygame.Surface(
-            (self.size * Pos(16, 16)).to_int_tuple(), pygame.SRCALPHA
-        )
-        surface.blit(self.image, (0, 0))
-        return surface
+        image = pygame.transform.rotate(self.image, self.rotation)
+        return image.copy()

@@ -1,6 +1,7 @@
 """ This file contains the Pos class, which is used to represent a 2D position in the game """
 
 from variables import RESOLUTION, ZOOM
+import math
 
 
 class Pos:
@@ -12,6 +13,18 @@ class Pos:
     def __init__(self, x: float, y: float):
         self.x = x
         self.y = y
+
+    def length(self):
+        """Get the length of the position"""
+        return math.sqrt(self.x**2 + self.y**2)
+
+    def get_forward_vector(self, rotation: float):
+        """Get the forward vector of the position based on rotation
+        Rotation is in degrees"""
+        return Pos(
+            math.sin(math.radians(rotation)),
+            math.cos(math.radians(rotation)),
+        )
 
     def __add__(self, other):
         return Pos(self.x + other.x, self.y + other.y)
