@@ -2,6 +2,7 @@
 
 import threading
 import time
+import uuid
 import pygame
 from pygame.constants import (
     K_UP,
@@ -19,6 +20,7 @@ from pygame.constants import (
     K_s,
     K_l,
     K_ESCAPE,
+    K_SPACE,
     QUIT,
 )
 from level import Level
@@ -48,6 +50,21 @@ class Game:
         self.screen = screen
         self.state = GameStates.PLAYING
 
+    def play_music(self):
+        """Plays the main game music"""
+        if pygame.mixer.music.get_busy():
+            return
+
+        pygame.mixer.music.load(
+            "assets/sounds/Piotr Musiał - The City Must Survive.mp3"
+        )
+
+        pygame.mixer.music.play(-1)
+
+    def pause_music(self):
+        """Pauses the main game music"""
+        pygame.mixer.music.pause()
+
     def move_camera(self, pos: Pos):
         """Move the camera to the given position"""
         self.camera_position = pos
@@ -69,6 +86,7 @@ class Game:
     def move_player(self):
         """Move the player"""
         INCREMENT = 1
+        time_since_last_shoot = pygame.time.get_ticks()
         while True:
             if self.state == GameStates.PLAYING:
                 keys = pygame.key.get_pressed()
@@ -104,6 +122,16 @@ class Game:
                     and not keys[K_RIGHT]
                 ):
                     player0["player"].throttle_on = False
+
+                if keys[K_SPACE]:
+                    if time_since_last_shoot + 150 < pygame.time.get_ticks():
+                        time_since_last_shoot = pygame.time.get_ticks()
+                        bullets = player0["player"].shoot()
+                        for bullet in bullets:
+                            self.level.entities[uuid.uuid4()] = {
+                                "entity": bullet,
+                                "pos": bullet.pos,
+                            }
                 time.sleep(0.05)
 
     def loop(self):
@@ -113,6 +141,7 @@ class Game:
 
         player_thread = threading.Thread(target=self.move_player)
         player_thread.start()
+        self.play_music()
         while True:
             # Check for pressed keys
             keys = pygame.key.get_pressed()
@@ -167,7 +196,8 @@ class Game:
             self.screen.fill((0, 0, 0))
             self.level.render(self.camera_position)
             self.level.players["0"]["player"].update()
-            self.entities.update()
+            for entity in self.level.entities.copy().values():
+                entity["entity"].update()
             # game.entities.draw(game.screen)
             pygame.display.flip()
 
@@ -186,6 +216,7 @@ if __name__ == "__main__":
     pygame.display.set_caption("The Game")
     pygame.font.init()
     pygame.display.init()
+    pygame.mixer.init()
     game = Game(screen1)
     print("Game initialized")
     game.loop()

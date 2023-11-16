@@ -3,14 +3,14 @@ This file contains the Level class, which is used to store the
 map of tiles and render them to the screen
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 import random
 import pygame
 from pos import Pos
 from tile import Tile, TileType
 from ui import UI
 from variables import ZOOM
-from main import Player
+from main import Player, Entity
 
 if TYPE_CHECKING:
     from game import Game
@@ -22,6 +22,7 @@ def clamp(n, smallest, largest):
 
 
 PlayerData = TypedDict("PlayerData", {"pos": Pos, "health": int, "player": Player})
+EntityData = TypedDict("EntityData", {"pos": Pos, "health": int, "entity": Entity})
 
 
 class Level:
@@ -35,6 +36,8 @@ class Level:
     map_editor_hotbar: list[TileType | None]
     selected_tile: int  # Index of selected tile in tile hotbar
     players: dict[str, PlayerData]
+    entities: dict[str, EntityData]
+    random_star_state: tuple[Any, ...]
 
     def __init__(self, size: Pos, game: Game):
         self.size = size
@@ -44,6 +47,7 @@ class Level:
         self.props = {}
 
         self.players = {}
+        self.entities = {}
 
         # Get center position
         center_pos = self.game.camera_position
@@ -53,6 +57,10 @@ class Level:
             "health": 100,
             "player": Player(center_pos),
         }
+
+        random.seed(random.randint(0, 1000000))
+
+        self.random_star_state = random.getstate()
 
     def mouse_to_in_game_coordinates(self):
         """Returns the mouse position in in-game coordinates"""
@@ -80,6 +88,8 @@ class Level:
         # Render players
         self.render_players(final_render, camera_position)
 
+        self.render_entities(final_render, camera_position)
+
         # Apply zoom and blit to screen
         self.apply_zoom_and_blit(final_render)
 
@@ -98,10 +108,10 @@ class Level:
 
         STAR_SIZE_MIN = 2
         STAR_SIZE_MAX = 5
-        STAR_COUNT_MIN = 10 * 8
+        STAR_COUNT_MIN = 20 * 8
         STAR_COUNT_MAX = 30 * 8
 
-        random.seed(10000)
+        random.setstate(self.random_star_state)
         star_count = random.randint(STAR_COUNT_MIN, STAR_COUNT_MAX)
 
         star_surface = pygame.Surface(
@@ -143,6 +153,25 @@ class Level:
                     # Center player surface at center of screen
                     final_render.get_width() / 2 - player_surface.get_width() / 2,
                     final_render.get_height() / 2 - player_surface.get_height() / 2,
+                ),
+            )
+
+    def render_entities(self, final_render, camera_position: Pos):
+        """Render all entities onto the screen"""
+        # Render entities
+        for entity in self.entities.copy().values():
+            entity_surface = entity["entity"].render(camera_position)
+
+            # Calculate screen position based on distance from player (center of screen)
+            entity_screen_pos = entity["entity"].pos
+
+            final_render.blit(
+                entity_surface,
+                (
+                    (final_render.get_width() / 2 - entity_surface.get_width() / 2)
+                    + entity_screen_pos.x,
+                    (final_render.get_height() / 2 - entity_surface.get_height() / 2)
+                    + entity_screen_pos.y,
                 ),
             )
 

@@ -26,6 +26,14 @@ class Pos:
             math.cos(math.radians(rotation)),
         )
 
+    def get_right_vector(self, rotation: float):
+        """Get the right vector of the position based on rotation
+        Rotation is in degrees"""
+        return Pos(
+            math.cos(math.radians(rotation)),
+            -math.sin(math.radians(rotation)),
+        )
+
     def __add__(self, other):
         return Pos(self.x + other.x, self.y + other.y)
 
