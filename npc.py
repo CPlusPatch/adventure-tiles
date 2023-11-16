@@ -1,5 +1,5 @@
 """ NPC class """
-from main import Entity
+from entity import Entity
 
 
 class NPC(Entity):

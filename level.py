@@ -3,14 +3,14 @@ This file contains the Level class, which is used to store the
 map of tiles and render them to the screen
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any
 import random
 import pygame
-from pos import Pos
+from pos import Vector2, Coords
 from tile import Tile, TileType
 from ui import UI
 from variables import ZOOM
-from main import Player, Entity
+from entity import Player, Entity
 
 if TYPE_CHECKING:
     from game import Game
@@ -21,42 +21,34 @@ def clamp(n, smallest, largest):
     return max(smallest, min(n, largest))
 
 
-PlayerData = TypedDict("PlayerData", {"pos": Pos, "health": int, "player": Player})
-EntityData = TypedDict("EntityData", {"pos": Pos, "health": int, "entity": Entity})
-
-
 class Level:
     """Each level is its own map of 2D tiles"""
 
-    size: Pos
+    size: Vector2
     tiles: list[Tile | None]
     game: Game
     ui: UI
     edit_mode: bool
     map_editor_hotbar: list[TileType | None]
     selected_tile: int  # Index of selected tile in tile hotbar
-    players: dict[str, PlayerData]
-    entities: dict[str, EntityData]
+    players: list[Player]
+    entities: list[Entity]  # Doesnt contain players
     random_star_state: tuple[Any, ...]
 
-    def __init__(self, size: Pos, game: Game):
+    def __init__(self, size: Vector2, game: Game):
         self.size = size
         self.game = game
 
         self.ui = UI(self.game, self)
         self.props = {}
 
-        self.players = {}
-        self.entities = {}
+        self.players = []
+        self.entities = []
 
         # Get center position
         center_pos = self.game.camera_position
         # Load player 1
-        self.players["0"] = {
-            "pos": center_pos,
-            "health": 100,
-            "player": Player(center_pos),
-        }
+        self.players.append(Player(Coords(center_pos, None)))
 
         random.seed(random.randint(0, 1000000))
 
@@ -64,15 +56,15 @@ class Level:
 
     def mouse_to_in_game_coordinates(self):
         """Returns the mouse position in in-game coordinates"""
-        mouse_pos = Pos(*pygame.mouse.get_pos())
-        mouse_pos -= Pos(
+        mouse_pos = Vector2(*pygame.mouse.get_pos())
+        mouse_pos -= Vector2(
             self.game.screen.get_width() / 2, self.game.screen.get_height() / 2
         )
-        mouse_pos /= Pos(16 * ZOOM, 16 * ZOOM)
+        mouse_pos /= Vector2(16 * ZOOM, 16 * ZOOM)
         mouse_pos += self.game.camera_position
         return mouse_pos.to_int()
 
-    def render(self, camera_position: Pos):
+    def render(self, camera_position: Vector2):
         """
         Render the level onto the screen, with the camera position taken into account
         (0, 0) camera position is the center of the screen, the level is initially drawn
@@ -86,9 +78,9 @@ class Level:
         self.render_stars()
 
         # Render players
-        self.render_players(final_render, camera_position)
+        self.render_players(final_render)
 
-        self.render_entities(final_render, camera_position)
+        self.render_entities(final_render)
 
         # Apply zoom and blit to screen
         self.apply_zoom_and_blit(final_render)
@@ -121,7 +113,7 @@ class Level:
         for _ in range(star_count):
             # Draw a white circle
             star_size = random.randint(STAR_SIZE_MIN, STAR_SIZE_MAX)
-            star_pos = Pos(
+            star_pos = Vector2(
                 random.randint(0, star_surface.get_width()),
                 random.randint(0, star_surface.get_height()),
             )
@@ -142,11 +134,11 @@ class Level:
             ),
         )
 
-    def render_players(self, final_render, camera_position):
+    def render_players(self, final_render: pygame.Surface):
         """Render all players onto the screen"""
         # Render player
-        for player in self.players.values():
-            player_surface = player["player"].render(camera_position)
+        for player in self.players:
+            player_surface = player.render()
             final_render.blit(
                 player_surface,
                 (
@@ -156,14 +148,14 @@ class Level:
                 ),
             )
 
-    def render_entities(self, final_render, camera_position: Pos):
+    def render_entities(self, final_render: pygame.Surface):
         """Render all entities onto the screen"""
         # Render entities
-        for entity in self.entities.copy().values():
-            entity_surface = entity["entity"].render(camera_position)
+        for entity in self.entities.copy():
+            entity_surface = entity.render()
 
             # Calculate screen position based on distance from player (center of screen)
-            entity_screen_pos = entity["entity"].pos
+            entity_screen_pos = entity.coords.pos
 
             final_render.blit(
                 entity_surface,
@@ -175,7 +167,21 @@ class Level:
                 ),
             )
 
-    def apply_zoom_and_blit(self, final_render):
+    def update_all(self):
+        """Update entities and players, and remove dead entities"""
+        # Update players
+        for player in self.players:
+            print(player.coords.pos)
+            player.update()
+
+        # Update entities
+        for entity in self.entities.copy():
+            entity.update()
+
+            if entity.dead:
+                self.entities.remove(entity)
+
+    def apply_zoom_and_blit(self, final_render: pygame.Surface):
         """Apply zoom and blit to screen"""
         # Apply zoom
         final_render = pygame.transform.scale(

@@ -10,39 +10,45 @@ that can be rendered on the screen
 """
 
 import pygame
-from pos import Pos
+from pos import Coords, Vector2
 
 
 class Entity(pygame.sprite.Sprite):
     """An entity is an object that can be rendered on the screen"""
 
-    pos: Pos
-    size: Pos
+    coords: Coords
+    velocity: Vector2
+    size: Vector2
     image: pygame.Surface
     rect: pygame.Rect
+    dead: bool
 
-    def __init__(self, pos: Pos, size: Pos):
+    def __init__(
+        self, coords: Coords, size: Vector2, velocity: Vector2 = Vector2(0, 0)
+    ):
         super().__init__()
-        self.pos = pos
+        self.coords = coords
         self.size = size
-        self.image = pygame.Surface((size * Pos(16, 16)).to_int_tuple())
+        self.velocity = velocity
+        self.image = pygame.Surface(size.to_int_tuple())
         self.rect = self.image.get_rect()
-        self.rect.x = pos.x
-        self.rect.y = pos.y
+        self.rect.x = coords.pos.x
+        self.rect.y = coords.pos.y
+        self.dead = False
 
     def update(self):
         """Called every frame, at 60 frames a second"""
-        self.rect.x = self.pos.x
-        self.rect.y = self.pos.y
+        self.rect.x = self.coords.pos.x
+        self.rect.y = self.coords.pos.y
 
-    def render(self, _camera_pos: Pos):
+    def render(self):
         """Render the entity on the screen"""
-        surface = pygame.Surface((self.size * Pos(16, 16)).to_int_tuple())
+        surface = pygame.Surface(self.size.to_int_tuple())
         surface.blit(self.image, (0, 0))
 
-    def move(self, pos: Pos):
+    def move(self, pos: Vector2):
         """Move the entity by the given position"""
-        self.pos += pos
+        self.coords.pos += pos
 
 
 class Player(Entity):
@@ -52,10 +58,9 @@ class Player(Entity):
     frame: int
     timer: int
     sprites: list[pygame.Surface]
-    rotation: float
 
-    def __init__(self, pos: Pos):
-        super().__init__(pos, Pos(43, 47))
+    def __init__(self, coords: Coords):
+        super().__init__(coords, Vector2(43, 47))
 
         # Load animation sprites from a single image of 16x32 sprites stitched together
         spritesheet = pygame.image.load(
@@ -67,20 +72,14 @@ class Player(Entity):
         self.frame = 0
         self.timer = 0
         self.throttle_on = False
-        self.rotation = 180
 
     def shoot(self):
         """Shoot a bullet"""
         OFFSET_RIGHT = 10
         OFFSET_LEFT = 6
 
-        right_side_pos = self.pos + self.pos.get_right_vector(self.rotation) * Pos(
-            OFFSET_RIGHT, OFFSET_RIGHT
-        )
-
-        left_side_pos = self.pos - self.pos.get_right_vector(self.rotation) * Pos(
-            OFFSET_LEFT, OFFSET_LEFT
-        )
+        right_side_pos = self.coords.pos + self.coords.right() * OFFSET_RIGHT
+        left_side_pos = self.coords.pos + self.coords.left() * OFFSET_LEFT
 
         # Play shooting sound
         sound = pygame.mixer.Sound("assets/sounds/laser.wav")
@@ -88,32 +87,28 @@ class Player(Entity):
         sound.play()
 
         return [
-            Bullet(right_side_pos, self.rotation),
-            Bullet(left_side_pos, self.rotation),
+            Bullet(Coords(right_side_pos, self.coords.rotation)),
+            Bullet(Coords(left_side_pos, self.coords.rotation)),
         ]
-
-    def rotate(self, angle: float):
-        """Rotate the player by the given angle"""
-        self.rotation += angle
 
     def update(self):
         """Called every frame, at 60 frames a second"""
-        if not self.throttle_on:
-            return
+        # Clamp velocity
+        MAX_VELOCITY = 3
+        self.velocity.x = max(-MAX_VELOCITY, min(MAX_VELOCITY, self.velocity.x))
+        self.velocity.y = max(-MAX_VELOCITY, min(MAX_VELOCITY, self.velocity.y))
 
-        self.timer += 1
-        if self.timer == 10:
-            self.frame += 1
-            self.timer = 0
-        if self.frame == 1:
-            self.frame = 0
-        self.image = self.sprites[self.frame]
+        self.coords.pos += self.velocity
+
+        # Decrease velocity gradually if player is not pushing throttle
+        if not self.throttle_on:
+            self.velocity *= 0.95
 
         super().update()
 
-    def render(self, _camera_pos: Pos):
+    def render(self):
         """Render the entity on the screen"""
-        image = pygame.transform.rotate(self.image, self.rotation)
+        image = pygame.transform.rotate(self.image, self.coords.rotation.to_degrees())
         return image.copy()
 
 
@@ -123,25 +118,27 @@ class Bullet(Entity):
     behind a bullet trail and moving forwards for 10 secs
     """
 
-    starting_position: Pos
-    rotation: float
+    coords: Coords
     sprite: pygame.Surface
+    time_created: float
 
-    def __init__(self, pos: Pos, rotation: float):
-        super().__init__(pos, Pos(1, 1))
-        self.starting_position = pos
-        self.rotation = rotation
+    def __init__(self, coords: Coords):
+        super().__init__(coords, Vector2(1, 1))
         self.sprite = pygame.image.load("assets/ammo/ammo.png").convert_alpha()
+        self.time_created = pygame.time.get_ticks()
 
     def update(self):
         """Called every frame, at 60 frames a second"""
+        # Destroy bullets after 5 seconds
+        if pygame.time.get_ticks() - self.time_created > 5000:
+            self.dead = True
+            return
+
         BULLET_SPEED = 25
-        self.pos -= self.pos.get_forward_vector(self.rotation) * Pos(
-            BULLET_SPEED, BULLET_SPEED
-        )
+        self.coords.pos -= self.coords.forward() * BULLET_SPEED
         super().update()
 
-    def render(self, _camera_pos: Pos):
+    def render(self):
         """Render the entity on the screen"""
         # Image is a small red rectangle with a bullet trail
         image = pygame.transform.scale(self.sprite, (3, 8))
@@ -153,5 +150,5 @@ class Bullet(Entity):
         # pygame.draw.rect(ima ge, (255, 0, 0), pygame.Rect(0, 0, 3, 8))
 
         # Rotate bullet
-        image = pygame.transform.rotate(image, self.rotation)
+        image = pygame.transform.rotate(image, self.coords.rotation.to_degrees())
         return image.copy()

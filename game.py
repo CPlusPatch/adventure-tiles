@@ -2,7 +2,7 @@
 
 import threading
 import time
-import uuid
+import math
 import pygame
 from pygame.constants import (
     K_UP,
@@ -24,8 +24,7 @@ from pygame.constants import (
     QUIT,
 )
 from level import Level
-from pos import Pos
-from main import Entity
+from pos import Vector2, Rotation
 from variables import RESOLUTION, GameStates
 
 
@@ -34,19 +33,15 @@ class Game:
 
     screen: pygame.Surface
     level: Level
-    camera_position: Pos
-    entities: pygame.sprite.Group
-    player: Entity
+    # Camera position always follows player for now
+    camera_position: Vector2
     last_click: int
     last_keypress: int
     state: GameStates
 
     def __init__(self, screen: pygame.Surface):
-        self.camera_position = Pos(3, 4)
-        self.level = Level(Pos(24, 24), self)
-        self.entities = pygame.sprite.Group()
-        self.player = Entity(Pos(0, 0), Pos(16, 16))
-        self.entities.add(self.player)
+        self.camera_position = Vector2(3, 4)
+        self.level = Level(Vector2(24, 24), self)
         self.screen = screen
         self.state = GameStates.PLAYING
 
@@ -65,7 +60,7 @@ class Game:
         """Pauses the main game music"""
         pygame.mixer.music.pause()
 
-    def move_camera(self, pos: Pos):
+    def move_camera(self, pos: Vector2):
         """Move the camera to the given position"""
         self.camera_position = pos
 
@@ -85,35 +80,27 @@ class Game:
 
     def move_player(self):
         """Move the player"""
-        INCREMENT = 1
+        INCREMENT = 0.01
         time_since_last_shoot = pygame.time.get_ticks()
         while True:
             if self.state == GameStates.PLAYING:
                 keys = pygame.key.get_pressed()
-                player0 = self.level.players["0"]
-                player_forward_vector = player0["player"].pos.get_forward_vector(
-                    player0["player"].rotation
-                )
+                player0 = self.level.players[0]
+                player_forward_vector = player0.coords.forward() * INCREMENT
 
                 if keys[K_UP]:
-                    self.camera_position -= player_forward_vector * Pos(
-                        INCREMENT, INCREMENT
-                    )
-                    player0["pos"] -= player_forward_vector * Pos(INCREMENT, INCREMENT)
-                    player0["player"].throttle_on = True
+                    player0.velocity -= player_forward_vector
+                    player0.throttle_on = True
 
                 if keys[K_DOWN]:
-                    self.camera_position += player_forward_vector * Pos(
-                        INCREMENT, INCREMENT
-                    )
-                    player0["pos"] += player_forward_vector * Pos(INCREMENT, INCREMENT)
-                    player0["player"].throttle_on = True
+                    player0.velocity += player_forward_vector
+                    player0.throttle_on = True
 
                 if keys[K_LEFT]:
-                    player0["player"].rotate(10)
+                    player0.coords.rotation += Rotation.from_degrees(10)
 
                 if keys[K_RIGHT]:
-                    player0["player"].rotate(-10)
+                    player0.coords.rotation -= Rotation.from_degrees(10)
 
                 if (
                     not keys[K_UP]
@@ -121,17 +108,16 @@ class Game:
                     and not keys[K_LEFT]
                     and not keys[K_RIGHT]
                 ):
-                    player0["player"].throttle_on = False
+                    player0.throttle_on = False
 
                 if keys[K_SPACE]:
                     if time_since_last_shoot + 150 < pygame.time.get_ticks():
                         time_since_last_shoot = pygame.time.get_ticks()
-                        bullets = player0["player"].shoot()
+                        bullets = player0.shoot()
                         for bullet in bullets:
-                            self.level.entities[uuid.uuid4()] = {
-                                "entity": bullet,
-                                "pos": bullet.pos,
-                            }
+                            self.level.entities.append(bullet)
+
+                self.camera_position = player0.coords.pos
                 time.sleep(0.05)
 
     def loop(self):
@@ -195,10 +181,7 @@ class Game:
 
             self.screen.fill((0, 0, 0))
             self.level.render(self.camera_position)
-            self.level.players["0"]["player"].update()
-            for entity in self.level.entities.copy().values():
-                entity["entity"].update()
-            # game.entities.draw(game.screen)
+            self.level.update_all()
             pygame.display.flip()
 
             # Cap at 60 FPS

@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Literal, Type
 import pygame
-from pos import Pos
+from pos import Vector2
 from variables import RESOLUTION
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ class TileType:
     passable: bool
     transparent: bool
     images: list[pygame.surface.Surface]  # Image is chosen at random from these
-    size: Pos  # The size of the tiles, where 1 means 16 pixels
+    size: Vector2  # The size of the tiles, where 1 means 16 pixels
     # (for example, a 2x3 size would be 32x48 pixels, so 6 images)
     align: Align  # The alignment of the tile, i.e. which corner it is rendered from
     z_index: int  # The z-index of the tile
@@ -50,7 +50,7 @@ class TileType:
         self,
         name: str,
         images: list[pygame.surface.Surface],
-        size: Pos,
+        size: Vector2,
         align: Align,
         passable: bool,
         transparent: bool,
@@ -172,19 +172,19 @@ class TileType:
         else:
             return self.images[0]
 
-    def on_interact(self, game: Game, pos: Pos):
+    def on_interact(self, game: Game, pos: Vector2):
         """Called when the player interacts with the tile"""
 
-    def on_walk(self, game: Game, pos: Pos):
+    def on_walk(self, game: Game, pos: Vector2):
         """Called when the player walks on the tile"""
 
-    def on_attack(self, game: Game, pos: Pos):
+    def on_attack(self, game: Game, pos: Vector2):
         """Called when the player attacks the tile"""
 
-    def on_destroy(self, game: Game, pos: Pos):
+    def on_destroy(self, game: Game, pos: Vector2):
         """Called when the player destroys the tile"""
 
-    def on_use(self, game: Game, pos: Pos):
+    def on_use(self, game: Game, pos: Vector2):
         """Called when the player uses the tile"""
 
 
@@ -195,7 +195,7 @@ class Grass(TileType):
         super().__init__(
             "base:grass",
             [overworld_subsurface(0, 0, 1, 1)],
-            Pos(1, 1),
+            Vector2(1, 1),
             Align.TOP_LEFT,
             True,
             False,
@@ -229,7 +229,7 @@ class Grass(TileType):
             ],
         )
 
-    def on_walk(self, game: Game, pos: Pos):
+    def on_walk(self, game: Game, pos: Vector2):
         print("You walk on grass")
 
     def get_sprite(self, surrounding_tiles: list[TileType]):
@@ -260,13 +260,13 @@ class Earth(TileType):
         super().__init__(
             "base:earth",
             [overworld_subsurface(1, 30, 2, 31), overworld_subsurface(2, 32, 3, 33)],
-            Pos(1, 1),
+            Vector2(1, 1),
             Align.TOP_LEFT,
             True,
             False,
         )
 
-    def on_walk(self, game: Game, pos: Pos):
+    def on_walk(self, game: Game, pos: Vector2):
         print("You walk on earth")
 
 
@@ -287,13 +287,13 @@ class Water(TileType):
         super().__init__(
             "base:water",
             [overworld_subsurface(3, 7, 4, 8)],
-            Pos(1, 1),
+            Vector2(1, 1),
             Align.TOP_LEFT,
             False,
             False,
         )
 
-    def on_walk(self, game: Game, pos: Pos):
+    def on_walk(self, game: Game, pos: Vector2):
         print("You walk on water")
 
 

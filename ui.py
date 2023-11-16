@@ -10,8 +10,7 @@ from variables import (
     BUTTON_HEIGHT,
     BUTTON_GAP,
 )
-from tile import Tile
-from pos import Pos
+from pos import Vector2
 
 if TYPE_CHECKING:
     from game import Game
@@ -98,7 +97,7 @@ class UI:
                     outlinecolor=(0, 0, 0),
                 ),
             ],
-            Pos(box_pos[0] + box_size[0] / 2, box_pos[1] + box_size[1] / 2),
+            Vector2(box_pos[0] + box_size[0] / 2, box_pos[1] + box_size[1] / 2),
         )
 
         stack_surface = stack.render()
@@ -173,9 +172,9 @@ class VButtonStack:
     """Vertical stack of buttons"""
 
     buttons: list[UIButtonRenderer]
-    screen_position: Pos
+    screen_position: Vector2
 
-    def __init__(self, buttons: list[UIButtonRenderer], screen_position: Pos):
+    def __init__(self, buttons: list[UIButtonRenderer], screen_position: Vector2):
         self.buttons = buttons
         self.screen_position = screen_position
 
@@ -201,7 +200,7 @@ class VButtonStack:
         # Check if is being clicked
         # If so, call the onclick function
         if pygame.mouse.get_pressed()[0]:
-            mouse_pos = Pos(*pygame.mouse.get_pos())
+            mouse_pos = Vector2(*pygame.mouse.get_pos())
             for i, button in enumerate(self.buttons):
                 if (
                     mouse_pos.x > self.screen_position.x
