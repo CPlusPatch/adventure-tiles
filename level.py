@@ -11,6 +11,7 @@ from tile import Tile, TileType
 from ui import UI
 from variables import ZOOM
 from entity import Player, Entity
+from stars import StarfieldRenderer
 
 if TYPE_CHECKING:
     from game import Game
@@ -33,7 +34,8 @@ class Level:
     selected_tile: int  # Index of selected tile in tile hotbar
     players: list[Player]
     entities: list[Entity]  # Doesnt contain players
-    random_star_state: tuple[Any, ...]
+    random_star_state: int
+    starfield_renderer: StarfieldRenderer
 
     def __init__(self, size: Vector2, game: Game):
         self.size = size
@@ -50,9 +52,9 @@ class Level:
         # Load player 1
         self.players.append(Player(Coords(center_pos, None)))
 
-        random.seed(random.randint(0, 1000000))
+        self.random_star_state = random.randint(0, 1000000)
 
-        self.random_star_state = random.getstate()
+        self.starfield_renderer = StarfieldRenderer(self.random_star_state)
 
     def mouse_to_in_game_coordinates(self):
         """Returns the mouse position in in-game coordinates"""
@@ -98,40 +100,9 @@ class Level:
         # Draw a random amount of white circles in random uniform positions across
         # a surface the size of the screen
 
-        STAR_SIZE_MIN = 2
-        STAR_SIZE_MAX = 5
-        STAR_COUNT_MIN = 20 * 8
-        STAR_COUNT_MAX = 30 * 8
-
-        random.setstate(self.random_star_state)
-        star_count = random.randint(STAR_COUNT_MIN, STAR_COUNT_MAX)
-
-        star_surface = pygame.Surface(
-            (self.game.screen.get_width() * 4, self.game.screen.get_height() * 4)
-        )
-
-        for _ in range(star_count):
-            # Draw a white circle
-            star_size = random.randint(STAR_SIZE_MIN, STAR_SIZE_MAX)
-            star_pos = Vector2(
-                random.randint(0, star_surface.get_width()),
-                random.randint(0, star_surface.get_height()),
-            )
-
-            pygame.draw.circle(
-                star_surface,
-                (255, 255, 255),
-                star_pos.to_int_tuple(),
-                star_size,
-            )
-
-        # Offset the star surface by the player's position in reverse, slower than the player
-        self.game.screen.blit(
-            star_surface,
-            (
-                -self.game.camera_position.x * 16 * ZOOM / 1,
-                -self.game.camera_position.y * 16 * ZOOM / 1,
-            ),
+        self.starfield_renderer.render(
+            self.game.screen,
+            self.game.camera_position,
         )
 
     def render_players(self, final_render: pygame.Surface):
@@ -171,7 +142,6 @@ class Level:
         """Update entities and players, and remove dead entities"""
         # Update players
         for player in self.players:
-            print(player.coords.pos)
             player.update()
 
         # Update entities
