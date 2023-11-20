@@ -80,7 +80,7 @@ class Game:
 
     def move_player(self):
         """Move the player"""
-        INCREMENT = 0.01
+        INCREMENT = 0.07
         time_since_last_shoot = pygame.time.get_ticks()
         while True:
             if self.state == GameStates.PLAYING:

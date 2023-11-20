@@ -33,6 +33,7 @@ class UI:
         self.game = game
         self.level = level
         self.surface = pygame.Surface(RESOLUTION, pygame.SRCALPHA)
+        self.lines_overlay = LinesOverlay()
 
     def render(self):
         """
@@ -42,6 +43,8 @@ class UI:
 
         if self.game.state == GameStates.PLAYING:
             self.render_health()
+            # Render lines overlay
+            self.lines_overlay.render(self.surface)
         elif self.game.state == GameStates.MENU:
             self.render_menu()
         return self.surface
@@ -167,6 +170,40 @@ class UI:
             ),
         )
 
+class LinesOverlay:
+    """Renders the lines overlay, covering the screen"""
+    sprites: list[pygame.Surface]
+    frame: int
+
+    def __init__(self):
+        self.frame = 0
+        self.sprites = []
+        for i in range(1, 128):
+            # With leading zeroes, 3 digits
+            self.sprites.append(pygame.transform.scale(pygame.image.load(f"assets/overlays/lines-{i:03}.png"), (
+                RESOLUTION[0],
+                RESOLUTION[1],
+            )))
+
+
+    def render(self, surface: pygame.Surface):
+        """Render the lines overlay, covering the screen"""
+
+        self.frame += 1
+        if self.frame >= len(self.sprites):
+            self.frame = 0
+
+        # Set sprite opacity to 0.4
+        sprite = self.sprites[self.frame].copy()
+
+        sprite.fill((255, 255, 255, 102), special_flags=pygame.BLEND_RGBA_MULT)
+        
+        surface.blit(
+            sprite,
+            (
+                0, 0
+            ),
+        )
 
 class VButtonStack:
     """Vertical stack of buttons"""

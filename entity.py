@@ -78,8 +78,8 @@ class Player(Entity):
         OFFSET_RIGHT = 10
         OFFSET_LEFT = 6
 
-        right_side_pos = self.coords.pos + self.coords.right() * OFFSET_RIGHT
-        left_side_pos = self.coords.pos + self.coords.left() * OFFSET_LEFT
+        right_side_pos = self.coords.pos #+ self.coords.right() * OFFSET_RIGHT
+        left_side_pos = self.coords.pos #+ self.coords.left() * OFFSET_LEFT
 
         # Play shooting sound
         sound = pygame.mixer.Sound("assets/sounds/laser.wav")
@@ -94,7 +94,7 @@ class Player(Entity):
     def update(self):
         """Called every frame, at 60 frames a second"""
         # Clamp velocity
-        MAX_VELOCITY = 3
+        MAX_VELOCITY = 6
         self.velocity.x = max(-MAX_VELOCITY, min(MAX_VELOCITY, self.velocity.x))
         self.velocity.y = max(-MAX_VELOCITY, min(MAX_VELOCITY, self.velocity.y))
 
@@ -103,6 +103,10 @@ class Player(Entity):
         # Decrease velocity gradually if player is not pushing throttle
         if not self.throttle_on:
             self.velocity *= 0.95
+            if abs(self.velocity.x) < 0.1:
+                self.velocity.x = 0
+            if abs(self.velocity.y) < 0.1:
+                self.velocity.y = 0
 
         super().update()
 
