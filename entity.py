@@ -11,13 +11,14 @@ that can be rendered on the screen
 
 import pygame
 from pos import Coords, Vector2
+from variables import MAX_PLAYER_VELOCITY
 
 
 class Entity(pygame.sprite.Sprite):
     """An entity is an object that can be rendered on the screen"""
 
     coords: Coords
-    velocity: Vector2
+    velocity: float
     size: Vector2
     image: pygame.Surface
     rect: pygame.Rect
@@ -29,7 +30,7 @@ class Entity(pygame.sprite.Sprite):
         super().__init__()
         self.coords = coords
         self.size = size
-        self.velocity = velocity
+        self.velocity = velocity.x
         self.image = pygame.Surface(size.to_int_tuple())
         self.rect = self.image.get_rect()
         self.rect.x = coords.pos.x
@@ -76,10 +77,10 @@ class Player(Entity):
     def shoot(self):
         """Shoot a bullet"""
         OFFSET_RIGHT = 10
-        OFFSET_LEFT = 6
+        # OFFSET_LEFT = 6
 
-        right_side_pos = self.coords.pos #+ self.coords.right() * OFFSET_RIGHT
-        left_side_pos = self.coords.pos #+ self.coords.left() * OFFSET_LEFT
+        right_side_pos = self.coords.pos  # + self.coords.right() * OFFSET_RIGHT
+        # left_side_pos = self.coords.pos  # + self.coords.left() * OFFSET_LEFT
 
         # Play shooting sound
         sound = pygame.mixer.Sound("assets/sounds/laser.wav")
@@ -87,26 +88,31 @@ class Player(Entity):
         sound.play()
 
         return [
-            Bullet(Coords(right_side_pos, self.coords.rotation)),
-            Bullet(Coords(left_side_pos, self.coords.rotation)),
+            Bullet(Coords(right_side_pos, self.coords.rotation), self.velocity),
+            # Bullet(Coords(left_side_pos, self.coords.rotation)),
         ]
 
     def update(self):
         """Called every frame, at 60 frames a second"""
         # Clamp velocity
-        MAX_VELOCITY = 6
-        self.velocity.x = max(-MAX_VELOCITY, min(MAX_VELOCITY, self.velocity.x))
-        self.velocity.y = max(-MAX_VELOCITY, min(MAX_VELOCITY, self.velocity.y))
+        # self.velocity.x = max(
+        #    -MAX_PLAYER_VELOCITY, min(MAX_PLAYER_VELOCITY, self.velocity.x)
+        # )
+        # self.velocity.y = max(
+        #    -MAX_PLAYER_VELOCITY, min(MAX_PLAYER_VELOCITY, self.velocity.y)
+        # )
 
-        self.coords.pos += self.velocity
+        self.velocity = max(
+            -MAX_PLAYER_VELOCITY, min(MAX_PLAYER_VELOCITY, self.velocity)
+        )
+
+        self.coords.pos += self.coords.forward() * self.velocity
 
         # Decrease velocity gradually if player is not pushing throttle
         if not self.throttle_on:
             self.velocity *= 0.95
-            if abs(self.velocity.x) < 0.1:
-                self.velocity.x = 0
-            if abs(self.velocity.y) < 0.1:
-                self.velocity.y = 0
+            if abs(self.velocity) < 0.1:
+                self.velocity = 0
 
         super().update()
 
@@ -126,10 +132,11 @@ class Bullet(Entity):
     sprite: pygame.Surface
     time_created: float
 
-    def __init__(self, coords: Coords):
+    def __init__(self, coords: Coords, velocity: float):
         super().__init__(coords, Vector2(1, 1))
         self.sprite = pygame.image.load("assets/ammo/ammo.png").convert_alpha()
         self.time_created = pygame.time.get_ticks()
+        self.velocity = velocity
 
     def update(self):
         """Called every frame, at 60 frames a second"""
@@ -138,8 +145,8 @@ class Bullet(Entity):
             self.dead = True
             return
 
-        BULLET_SPEED = 25
-        self.coords.pos -= self.coords.forward() * BULLET_SPEED
+        BULLET_SPEED = -1.1
+        self.coords.pos += self.coords.forward() * (self.velocity + BULLET_SPEED)
         super().update()
 
     def render(self):

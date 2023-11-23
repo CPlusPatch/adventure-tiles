@@ -11,16 +11,12 @@ from variables import (
     BUTTON_GAP,
 )
 from pos import Vector2
+from entity import Player
+from variables import MAX_PLAYER_VELOCITY
 
 if TYPE_CHECKING:
     from game import Game
     from level import Level
-
-HEART_100 = pygame.image.load("assets/ui/heart_100.png")
-HEART_75 = pygame.image.load("assets/ui/heart_75.png")
-HEART_50 = pygame.image.load("assets/ui/heart_50.png")
-HEART_25 = pygame.image.load("assets/ui/heart_25.png")
-HEART_0 = pygame.image.load("assets/ui/heart_0.png")
 
 
 class UI:
@@ -35,7 +31,7 @@ class UI:
         self.surface = pygame.Surface(RESOLUTION, pygame.SRCALPHA)
         self.lines_overlay = LinesOverlay()
 
-    def render(self):
+    def render(self, player: Player):
         """
         Renders the UI
         """
@@ -44,7 +40,7 @@ class UI:
         if self.game.state == GameStates.PLAYING:
             self.render_health()
             # Render lines overlay
-            self.lines_overlay.render(self.surface)
+            self.lines_overlay.render(self.surface, player.velocity)
         elif self.game.state == GameStates.MENU:
             self.render_menu()
         return self.surface
@@ -170,23 +166,29 @@ class UI:
             ),
         )
 
+
 class LinesOverlay:
     """Renders the lines overlay, covering the screen"""
+
     sprites: list[pygame.Surface]
     frame: int
 
     def __init__(self):
         self.frame = 0
         self.sprites = []
-        for i in range(1, 128):
+        for i in range(1, 30):
             # With leading zeroes, 3 digits
-            self.sprites.append(pygame.transform.scale(pygame.image.load(f"assets/overlays/lines-{i:03}.png"), (
-                RESOLUTION[0],
-                RESOLUTION[1],
-            )))
+            self.sprites.append(
+                pygame.transform.scale(
+                    pygame.image.load(f"assets/overlays/lines-{i:03}.png"),
+                    (
+                        RESOLUTION[0],
+                        RESOLUTION[1],
+                    ),
+                )
+            )
 
-
-    def render(self, surface: pygame.Surface):
+    def render(self, surface: pygame.Surface, player_velocity: Vector2):
         """Render the lines overlay, covering the screen"""
 
         self.frame += 1
@@ -196,14 +198,25 @@ class LinesOverlay:
         # Set sprite opacity to 0.4
         sprite = self.sprites[self.frame].copy()
 
-        sprite.fill((255, 255, 255, 102), special_flags=pygame.BLEND_RGBA_MULT)
-        
+        # Opacity factors on player velocity
+        # The slower the player is going, the more transparent the lines are
+        opacity = (
+            player_velocity / Vector2(MAX_PLAYER_VELOCITY, MAX_PLAYER_VELOCITY).length()
+            - 0.4
+        )
+
+        if opacity <= 0:
+            return
+
+        sprite.fill(
+            (255, 255, 255, opacity * 255), special_flags=pygame.BLEND_RGBA_MULT
+        )
+
         surface.blit(
             sprite,
-            (
-                0, 0
-            ),
+            (0, 0),
         )
+
 
 class VButtonStack:
     """Vertical stack of buttons"""

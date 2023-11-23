@@ -126,15 +126,18 @@ class Level:
             entity_surface = entity.render()
 
             # Calculate screen position based on distance from player (center of screen)
-            entity_screen_pos = entity.coords.pos
+            offset_from_screen_center = entity.coords.pos - self.game.camera_position
 
             final_render.blit(
                 entity_surface,
                 (
-                    (final_render.get_width() / 2 - entity_surface.get_width() / 2)
-                    + entity_screen_pos.x,
-                    (final_render.get_height() / 2 - entity_surface.get_height() / 2)
-                    + entity_screen_pos.y,
+                    # Center entity surface at center of screen
+                    final_render.get_width() / 2
+                    - entity_surface.get_width() / 2
+                    + offset_from_screen_center.x * 16 * ZOOM,
+                    final_render.get_height() / 2
+                    - entity_surface.get_height() / 2
+                    + offset_from_screen_center.y * 16 * ZOOM,
                 ),
             )
 
@@ -172,7 +175,7 @@ class Level:
     def render_ui(self):
         """Render UI"""
         # Render UI
-        self.game.screen.blit(self.ui.render(), (0, 0))
+        self.game.screen.blit(self.ui.render(self.players[0]), (0, 0))
 
     def save(self):
         """Save the level to a savefile"""

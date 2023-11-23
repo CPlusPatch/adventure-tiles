@@ -86,14 +86,14 @@ class Game:
             if self.state == GameStates.PLAYING:
                 keys = pygame.key.get_pressed()
                 player0 = self.level.players[0]
-                player_forward_vector = player0.coords.forward() * INCREMENT
+                # player_forward_vector = player0.coords.forward() * INCREMENT
 
                 if keys[K_UP]:
-                    player0.velocity -= player_forward_vector
+                    player0.velocity -= 1
                     player0.throttle_on = True
 
                 if keys[K_DOWN]:
-                    player0.velocity += player_forward_vector
+                    player0.velocity += 1
                     player0.throttle_on = True
 
                 if keys[K_LEFT]:

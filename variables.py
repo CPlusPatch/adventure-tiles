@@ -11,6 +11,8 @@ BUTTON_WIDTH = 200
 BUTTON_HEIGHT = 50
 BUTTON_GAP = 4
 
+MAX_PLAYER_VELOCITY = 6
+
 
 class GameStates(Enum):
     """The game states"""
